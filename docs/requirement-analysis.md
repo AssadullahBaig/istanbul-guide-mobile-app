@@ -1,7 +1,7 @@
 # Smart City Exploration Application for Istanbul  
 ## Requirement Analysis – Individual Report
 
----
+
 
 # I. Introduction
 
@@ -11,7 +11,7 @@ By integrating GPS-based navigation, interactive maps, route optimization, and A
 
 This document presents the analysis of similar projects, identification of potential technologies, and the definition of functional and non-functional requirements.
 
----
+
 
 # II. Analysis of Similar Projects
 
@@ -64,7 +64,7 @@ However, large-scale traffic prediction and global infrastructure would be beyon
 - Limited structured itinerary building  
 - Overloaded interface  
 
----
+
 
 ## B. TripAdvisor
 
@@ -112,7 +112,7 @@ Feasible features include:
 - Minimal offline functionality  
 - Not city-specific  
 
----
+
 
 ## C. Comparative Summary
 
@@ -126,7 +126,7 @@ Feasible features include:
 | AI Personalization | ✔ | Basic | ✔ (Planned) |
 | City-Specific Focus | ✖ | ✖ | ✔ |
 
----
+
 
 # III. Potential Technologies and Tools
 
@@ -161,7 +161,7 @@ Feasible features include:
 - Postman for API testing  
 - Firebase Analytics (optional)  
 
----
+
 
 # IV. Requirements Specification
 
@@ -174,7 +174,7 @@ FR4. The system shall allow users to save places and create itineraries.
 FR5. The system shall support user reviews and ratings for attractions and restaurants.  
 FR6. The system shall provide offline access to saved locations and selected map areas.  
 
----
+
 
 ## B. Non-Functional Requirements
 
@@ -185,7 +185,7 @@ NFR4. Security: The system shall securely handle user authentication and protect
 NFR5. Availability: The application shall provide partial functionality in offline mode.  
 NFR6. Maintainability: The system architecture shall follow modular design principles to support future expansion.  
 
----
+
 
 # V. Conclusion
 
