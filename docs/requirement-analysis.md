@@ -1,7 +1,7 @@
 # Smart City Exploration Application for Istanbul  
 ## Requirement Analysis – Individual Report
 
-
+---
 
 # I. Introduction
 
