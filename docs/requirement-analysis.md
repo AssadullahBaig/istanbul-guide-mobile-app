@@ -1,194 +1,227 @@
-# Smart City Exploration Application for Istanbul  
-## Requirement Analysis – Individual Report
+# Istanbul Guide Mobile App  
+## Requirement Analysis, Methodology & Module Planning
+
+**Project:** Istanbul Guide Mobile Application  
+**Course:** Software Engineering  
+**Instructor:** Büşra Kocaçınar  
+**Group:** 19  
 
 ---
 
-# I. Introduction
+# 1. Introduction
 
-The Istanbul Guide Mobile Application is proposed as a smart city exploration system designed to enhance the experience of both tourists and residents in Istanbul. The application aims to provide comprehensive information about historical landmarks, museums, cultural venues, restaurants, transportation options, and local events.
+The Istanbul Guide Mobile Application is a smart city exploration system designed to improve how tourists and residents explore Istanbul. The application will provide information about historical landmarks, museums, cultural venues, restaurants, transportation options, and local events.
 
-By integrating GPS-based navigation, interactive maps, route optimization, and AI-powered recommendations, the system seeks to offer a personalized and efficient way to explore the city. Offline access and multilingual support are also planned to improve accessibility.
+The system will integrate GPS navigation, interactive maps, route optimization, and personalized recommendations. It will also support offline access and multilingual content. The goal is to create a focused, user-friendly, and intelligent digital guide specifically for Istanbul.
 
-This document presents the analysis of similar projects, identification of potential technologies, and the definition of functional and non-functional requirements.
+---
 
+# 2. Similar Projects (Individual Research)
 
+## 2.1 Google Maps
 
-# II. Analysis of Similar Projects
+### Methods Used
+- GPS-based navigation
+- Route optimization algorithms
+- Real-time traffic updates
+- Location-based discovery
+- User reviews and ratings
+- AI-based personalization
 
-## A. Google Maps
+### Technical Approach
+Google Maps uses large-scale geospatial databases, cloud infrastructure, and routing engines. It integrates map rendering APIs with backend services that process location data and calculate routes.
 
-### 1. Overview
+### Feasibility for Our Project
+City-level routing and POI listing are feasible using existing SDKs. However, global traffic prediction systems are outside the academic scope.
 
-Google Maps is a global navigation and mapping service that provides real-time GPS positioning, route planning, business listings, traffic updates, and user-generated reviews. Although it is not city-specific, its functionality overlaps significantly with the proposed Istanbul Guide system.
+### Strengths
+- Accurate navigation
+- Real-time route updates
+- Strong search functionality
+- Intelligent recommendations
 
-### 2. Methods Used
+### Weaknesses
+- Not focused on Istanbul specifically
+- Limited cultural storytelling
+- Overloaded interface
 
-- GPS-based real-time positioning  
-- Route optimization algorithms  
-- Real-time traffic monitoring  
-- Location-based discovery  
-- AI-based recommendation models  
-- Crowdsourced review system  
+### Critical Aspects
+- Dependence on external map APIs
+- Complexity of real-time routing
+- Data freshness is essential
 
-### 3. Technical Approach
+---
 
-Google Maps likely utilizes:
-- Distributed cloud infrastructure  
-- Large-scale geospatial databases  
-- Microservices architecture  
-- Machine learning for traffic prediction  
-- High-performance search indexing  
+## 2.2 TripAdvisor
 
-### 4. Feasibility for Proposed System
+### Methods Used
+- User-generated reviews
+- Ranking algorithms
+- Category filtering
+- Tourism-focused content presentation
 
-The following features are feasible within the scope of the Istanbul Guide application:
+### Technical Approach
+TripAdvisor uses centralized databases for attractions and reviews, search indexing systems, and ranking logic based on ratings and user feedback.
 
-- POI storage and filtering  
-- Route generation  
-- GPS integration  
-- Review and rating system  
+### Feasibility for Our Project
+A simplified review system and ranking mechanism can be implemented within the project scope.
 
-However, large-scale traffic prediction and global infrastructure would be beyond the academic project scope.
+### Strengths
+- Strong tourism focus
+- Community-based trust
+- Rich place descriptions
 
-### 5. Strengths
+### Weaknesses
+- Weak route optimization
+- Not offline-friendly
+- Not city-specific
 
-- Accurate navigation  
-- Real-time updates  
-- Scalable architecture  
-- Intelligent recommendation system  
+### Critical Aspects
+- Review moderation challenges
+- Risk of outdated information
+- Ranking bias issues
 
-### 6. Weaknesses
+---
 
-- Not culturally focused  
-- Not city-specific  
-- Limited structured itinerary building  
-- Overloaded interface  
+# 3. Potential Technologies & Tools
 
+## Mobile Development
+- React Native (Expo) or Flutter
+- SQLite or Realm for local storage
 
+## Maps & Navigation
+- Google Maps SDK or Mapbox SDK
 
-## B. TripAdvisor
+## Backend & Database
+- Node.js (Express or NestJS)
+- PostgreSQL database
 
-### 1. Overview
+## Optional Enhancements
+- Redis (caching)
+- AI-based assistant for recommendations
 
-TripAdvisor is a travel-focused platform that provides listings of attractions, restaurants, hotels, and user reviews. It is community-driven and supports trip planning and destination discovery.
+## Development Tools
+- GitHub for version control
+- Figma for UI/UX
+- Postman for API testing
 
-### 2. Methods Used
+---
 
-- User-generated reviews and ratings  
-- Ranking algorithms  
-- Category-based filtering  
-- Destination-based exploration  
-- Personalized recommendation logic  
+# 4. Requirements Specification (Individual)
 
-### 3. Technical Approach
+## 4.1 Functional Requirements
 
-TripAdvisor likely implements:
+FR1. The system shall display nearby attractions within a 5 km radius based on GPS location.  
+FR2. The system shall allow users to search and filter places by category, rating, and distance.  
+FR3. The system shall show an interactive map with clickable markers.  
+FR4. The system shall generate optimized routes between selected places.  
+FR5. The system shall allow users to create and manage itineraries.  
+FR6. The system shall display local events with time and location details.  
+FR7. The system shall support Turkish and English languages.  
 
-- Centralized POI database  
-- Review ranking algorithms  
-- Search indexing systems  
-- Moderation and content validation systems  
-- Scalable backend services  
+## 4.2 Non-Functional Requirements
 
-### 4. Feasibility for Proposed System
+NFR1. The main screen shall load within 2 seconds under normal conditions.  
+NFR2. Saved places shall be accessible offline.  
+NFR3. User authentication data shall be stored securely.  
+NFR4. Location permission shall be optional.  
+NFR5. The backend shall support at least 5,000 concurrent users.  
+NFR6. A new user shall reach a place detail screen within three interactions.  
+NFR7. The system shall follow modular architecture for maintainability.  
 
-Feasible features include:
+---
 
-- Attraction listings  
-- Review and rating functionality  
-- Category filters  
-- Favorites and saved places  
+# 5. Development Methodology (Group)
 
-### 5. Strengths
+## Selected Methodology: Agile Scrum
 
-- Strong tourism focus  
-- Community-driven credibility  
-- Detailed attraction descriptions  
+### Justification
+Agile Scrum allows incremental development and adaptation to changes. Since the project includes evolving features such as AI suggestions and offline support, iterative sprints are suitable.
 
-### 6. Weaknesses
+### Process
+- 2-week sprints
+- Sprint planning and review
+- Kanban task tracking
+- Regular team meetings
 
-- Limited navigation intelligence  
-- Weak route optimization  
-- Minimal offline functionality  
-- Not city-specific  
+---
 
+# 6. Main Project Modules
 
+## 6.1 POI & Content Management
+Subtasks:
+- Design database schema
+- Populate initial dataset
+- Implement CRUD operations
+Proposed Responsible: Member A
 
-## C. Comparative Summary
+## 6.2 Maps & GPS
+Subtasks:
+- Integrate Maps SDK
+- Implement location tracking
+- Show nearby markers
+Proposed Responsible: Member B
 
-| Feature | Google Maps | TripAdvisor | Proposed Istanbul Guide |
-|----------|-------------|-------------|--------------------------|
-| GPS Navigation | ✔ | Limited | ✔ |
-| Route Optimization | ✔ | ✖ | ✔ |
-| Reviews & Ratings | ✔ | ✔ | ✔ |
-| Cultural Focus | Limited | ✔ | ✔ |
-| Offline Mode | Partial | Limited | ✔ |
-| AI Personalization | ✔ | Basic | ✔ (Planned) |
-| City-Specific Focus | ✖ | ✖ | ✔ |
+## 6.3 Search & Filters
+Subtasks:
+- Search UI
+- Backend filtering logic
+Proposed Responsible: Member C
 
+## 6.4 Route Planner & Itinerary
+Subtasks:
+- Multi-stop routing
+- Itinerary management
+Proposed Responsible: Member B & C
 
+## 6.5 Offline Access
+Subtasks:
+- Local caching
+- Sync mechanism
+Proposed Responsible: Member C
 
-# III. Potential Technologies and Tools
+## 6.6 Reviews & Ratings
+Subtasks:
+- Review submission
+- Display ratings
+Proposed Responsible: Member A
 
-## A. Mobile Development
-- React Native (Expo) or Flutter  
-- SQLite / Realm for local storage  
-- State management tools  
+---
 
-## B. Maps and Navigation
-- Google Maps SDK  
-- Mapbox SDK  
-- OpenStreetMap integration  
+# 7. Feasibility Analysis
 
-## C. Backend Technologies
-- Node.js (Express or NestJS)  
-- PostgreSQL database  
-- RESTful API architecture  
+## Technical Feasibility
+All required technologies are well-documented and suitable for academic use. The system focuses on a single city, which reduces complexity.
 
-## D. AI and Recommendation System
-- Rule-based recommendation engine  
-- Machine learning-based personalization  
-- OpenAI API (optional for assistant functionality)  
+## Operational Feasibility
+Users are familiar with map-based applications. No special hardware is required.
 
-## E. Real-Time and Offline Features
-- WebSockets (for live updates)  
-- Local caching mechanisms  
-- Background data synchronization  
+## Time Feasibility
+By prioritizing an MVP (Map + Places + Search), the core system can be completed within the semester.
 
-## F. Development Tools
-- GitHub for version control  
-- Figma for UI/UX design  
-- Postman for API testing  
-- Firebase Analytics (optional)  
+---
 
+# 8. Risk Analysis
 
+## Technical Risks
+- API limits
+- Performance issues
 
-# IV. Requirements Specification
+## Data Risks
+- Outdated event data
+- Incomplete place information
 
-## A. Functional Requirements
+## Scope Risks
+- Adding too many advanced features
 
-FR1. The system shall display nearby attractions using GPS location.  
-FR2. The system shall provide search and filtering functionality for places.  
-FR3. The system shall generate optimized travel routes between selected locations.  
-FR4. The system shall allow users to save places and create itineraries.  
-FR5. The system shall support user reviews and ratings for attractions and restaurants.  
-FR6. The system shall provide offline access to saved locations and selected map areas.  
+Mitigation:
+- Focus on MVP first
+- Keep advanced AI features optional
 
+---
 
+# 9. References
 
-## B. Non-Functional Requirements
-
-NFR1. Performance: The system shall load primary screens within 2 seconds under normal network conditions.  
-NFR2. Usability: The system shall provide an intuitive and user-friendly interface.  
-NFR3. Scalability: The backend system shall support increasing user traffic without significant performance degradation.  
-NFR4. Security: The system shall securely handle user authentication and protect sensitive data.  
-NFR5. Availability: The application shall provide partial functionality in offline mode.  
-NFR6. Maintainability: The system architecture shall follow modular design principles to support future expansion.  
-
-
-
-# V. Conclusion
-
-The analysis of Google Maps and TripAdvisor demonstrates that while both platforms provide essential components such as navigation, discovery, and review systems, neither offers a fully integrated, city-specific, culturally focused smart exploration platform.
-
-The proposed Istanbul Guide application aims to combine intelligent navigation, curated cultural storytelling, AI personalization, and offline accessibility into a unified system tailored specifically for Istanbul.
+[1] Google, “Google Maps,” 2024.  
+[2] TripAdvisor, “TripAdvisor Platform,” 2024.  
+[3] Google Developers, “Google Maps Platform Documentation,” 2024.
