@@ -16,7 +16,7 @@ The system will integrate GPS navigation, interactive maps, route optimization, 
 
 ---
 
-# 2. Similar Projects (Individual Research)
+# 2. Similar Projects 
 
 ## 2.1 Google Maps
 
@@ -107,7 +107,7 @@ A simplified review system and ranking mechanism can be implemented within the p
 
 ---
 
-# 4. Requirements Specification (Individual)
+# 4. Requirements Specification 
 
 ## 4.1 Functional Requirements
 
