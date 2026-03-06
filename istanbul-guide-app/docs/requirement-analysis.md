@@ -1,7 +1,7 @@
 # Istanbul Guide Mobile App  
 ## Requirement Analysis, Methodology & Module Planning
 
-**Project:** Istanbul Guide Mobile Application  
+**Project:** Istanbul Guide Mobile Application   
 **Course:** Software Engineering  
 **Instructor:** Büşra Kocaçınar  
 **Group:** 19  
