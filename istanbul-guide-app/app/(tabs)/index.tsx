@@ -16,6 +16,7 @@ const ISTANBUL_REGION: Region = {
   longitudeDelta: 0.12,
 };
 
+// MAIN MAP SCREEN
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
 
