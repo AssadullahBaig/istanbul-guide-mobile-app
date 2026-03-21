@@ -202,4 +202,5 @@ export const historicalPlaces: MapItem[] = [
         longitude: 28.9681,
         period: "Ottoman",
     }
+
 ];

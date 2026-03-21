@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from "react-native";
-import { Marker, Region } from "react-native-maps";
-import ClusteredMapView from "react-native-map-supercluster";
+import MapView, { Marker, Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { getDistance } from "geolib";
 
@@ -9,7 +8,7 @@ import CategoryFilter from "../../components/CategoryFilter";
 import LandmarkDetailCard from "../../components/LandmarkDetailCard";
 import MyLocationButton from "../../components/MyLocationButton";
 import NearbyPlacesPanel from "../../components/NearbyPlacesPanel";
-import { historicalPlaces } from "../../constants/historicalPlaces";
+import { useHistoricalPlaces } from "../../hooks/useHistoricalPlaces";
 import { MapCategory, MapItem } from "../../types/map";
 
 
@@ -20,8 +19,8 @@ import { MapCategory, MapItem } from "../../types/map";
 const ISTANBUL_REGION: Region = {
   latitude: 41.0082,
   longitude: 28.9784,
-  latitudeDelta: 0.12,
-  longitudeDelta: 0.12,
+  latitudeDelta: 0.22,
+  longitudeDelta: 0.22,
 };
 
 
@@ -35,7 +34,7 @@ export default function MapScreen() {
   // Refs
   // ==============================
 
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapView | null>(null);
 
 
   // ==============================
@@ -49,6 +48,13 @@ export default function MapScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
+
+
+  // ==============================
+  // Data Loading
+  // ==============================
+
+  const { places, loading, error } = useHistoricalPlaces();
 
 
   // ==============================
@@ -107,37 +113,20 @@ export default function MapScreen() {
     }
   };
 
-
-  const getCategoryLabel = (category: MapCategory) => {
-    switch (category) {
-      case "Mosque":
-        return "MS";
-      case "Palace":
-        return "PL";
-      case "Museum":
-        return "MU";
-      case "Historical Event":
-        return "EV";
-      case "Monument":
-        return "MN";
-      default:
-        return "•";
-    }
-  };
   const getCategoryColor = (category: MapCategory) => {
     switch (category) {
       case "Mosque":
-        return "#2563eb";
+        return "blue";
       case "Palace":
-        return "#7c3aed";
+        return "purple";
       case "Museum":
-        return "#059669";
+        return "green";
       case "Historical Event":
-        return "#dc2626";
+        return "red";
       case "Monument":
-        return "#d97706";
+        return "orange";
       default:
-        return "#374151";
+        return "gray";
     }
   };
 
@@ -147,9 +136,9 @@ export default function MapScreen() {
   // ==============================
 
   const filteredPlaces = useMemo(() => {
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
 
-    return historicalPlaces.filter((item) => {
+    return places.filter((item) => {
       const matchesSearch =
         item.title.toLowerCase().includes(query) ||
         item.description.toLowerCase().includes(query) ||
@@ -160,7 +149,7 @@ export default function MapScreen() {
 
       return matchesSearch && matchesCategory;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [places, selectedCategory, searchQuery]);
 
   useEffect(() => {
     if (
@@ -171,7 +160,6 @@ export default function MapScreen() {
     }
   }, [filteredPlaces, selectedItem]);
 
-
   const selectedItemDistanceKm =
     selectedItem && userLocation
       ? (
@@ -181,7 +169,6 @@ export default function MapScreen() {
         }) / 1000
       ).toFixed(1)
       : null;
-
 
   const nearbyPlaces = useMemo(() => {
     if (!userLocation) return [];
@@ -211,47 +198,28 @@ export default function MapScreen() {
       {/* Map */}
       {/* ============================== */}
 
-      <ClusteredMapView
+      <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
         showsUserLocation
         showsMyLocationButton={false}
-        animationEnabled
-        clusterColor="#111827"
-        spiralEnabled
+        toolbarEnabled={false}
       >
-        {filteredPlaces.map((place) => {
-          const isSelected = selectedItem?.id === place.id;
-
-          return (
-            <Marker
-              key={place.id}
-              coordinate={{
-                latitude: place.latitude,
-                longitude: place.longitude,
-              }}
-              onPress={() => setSelectedItem(place)}
-            >
-              <View collapsable={false}>
-                <View
-                  style={[
-                    styles.customMarker,
-                    { backgroundColor: getCategoryColor(place.category) },
-                    isSelected && styles.selectedCustomMarker,
-                  ]}
-                >
-                  <Text style={styles.customMarkerText}>
-                    {getCategoryLabel(place.category)}
-                  </Text>
-                </View>
-              </View>
-            </Marker>
-          );
-        })}
-
-
-      </ClusteredMapView>
+        {filteredPlaces.map((place) => (
+          <Marker
+            key={place.id}
+            coordinate={{
+              latitude: place.latitude,
+              longitude: place.longitude,
+            }}
+            onPress={() => setSelectedItem(place)}
+            pinColor={getCategoryColor(place.category)}
+            title={place.title}
+            description={place.description}
+          />
+        ))}
+      </MapView>
 
 
       {/* ============================== */}
@@ -273,7 +241,6 @@ export default function MapScreen() {
       )}
 
 
-
       {/* ============================== */}
       {/* Top Overlay */}
       {/* ============================== */}
@@ -282,6 +249,14 @@ export default function MapScreen() {
 
         {locationStatus && (
           <Text style={styles.statusText}>{locationStatus}</Text>
+        )}
+
+        {loading && (
+          <Text style={styles.statusText}>Loading places...</Text>
+        )}
+
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
         )}
 
         {/* Search */}
@@ -308,6 +283,7 @@ export default function MapScreen() {
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />
+
         {/* Category Legends */}
         <ScrollView
           horizontal
@@ -316,35 +292,35 @@ export default function MapScreen() {
         >
           <View style={styles.legendItem}>
             <View style={[styles.legendBadge, { backgroundColor: "#2563eb" }]}>
-              <Text style={styles.legendBadgeText}>MS</Text>
+              {/* <Text style={styles.legendBadgeText}>MS</Text> */}
             </View>
             <Text style={styles.legendText}>Mosque</Text>
           </View>
 
           <View style={styles.legendItem}>
             <View style={[styles.legendBadge, { backgroundColor: "#7c3aed" }]}>
-              <Text style={styles.legendBadgeText}>PL</Text>
+              {/* <Text style={styles.legendBadgeText}>PL</Text> */}
             </View>
             <Text style={styles.legendText}>Palace</Text>
           </View>
 
           <View style={styles.legendItem}>
             <View style={[styles.legendBadge, { backgroundColor: "#059669" }]}>
-              <Text style={styles.legendBadgeText}>MU</Text>
+              {/* <Text style={styles.legendBadgeText}>MU</Text> */}
             </View>
             <Text style={styles.legendText}>Museum</Text>
           </View>
 
           <View style={styles.legendItem}>
             <View style={[styles.legendBadge, { backgroundColor: "#dc2626" }]}>
-              <Text style={styles.legendBadgeText}>EV</Text>
+              {/* <Text style={styles.legendBadgeText}>EV</Text> */}
             </View>
             <Text style={styles.legendText}>Event</Text>
           </View>
 
           <View style={styles.legendItem}>
             <View style={[styles.legendBadge, { backgroundColor: "#d97706" }]}>
-              <Text style={styles.legendBadgeText}>MN</Text>
+              {/* <Text style={styles.legendBadgeText}>MN</Text> */}
             </View>
             <Text style={styles.legendText}>Monument</Text>
           </View>
@@ -420,6 +396,13 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     marginBottom: 6,
+    color: "#374151",
+  },
+
+  errorText: {
+    fontSize: 12,
+    marginBottom: 6,
+    color: "#dc2626",
   },
 
   searchContainer: {
@@ -480,26 +463,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#374151",
     fontWeight: "500",
-  },
-
-  customMarker: {
-    minWidth: 30,
-    height: 30,
-    paddingHorizontal: 6,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "white",
-  },
-
-  selectedCustomMarker: {
-    transform: [{ scale: 1.12 }],
-  },
-
-  customMarkerText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "700",
   },
 });
