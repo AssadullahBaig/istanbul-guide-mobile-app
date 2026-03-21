@@ -17,7 +17,8 @@ export default function LandmarkDetailCard({
         <View style={styles.card}>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.meta}>
-                {item.category} • {item.period ?? "Unknown period"}
+                {item.category}
+                {item.period ? ` • ${item.period}` : ""}
                 {distanceKm ? ` • Approx ${distanceKm} km away` : ""}
             </Text>
             <Text style={styles.description}>{item.description}</Text>

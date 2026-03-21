@@ -215,8 +215,7 @@ export default function MapScreen() {
             }}
             onPress={() => setSelectedItem(place)}
             pinColor={getCategoryColor(place.category)}
-            title={place.title}
-            description={place.description}
+
           />
         ))}
       </MapView>

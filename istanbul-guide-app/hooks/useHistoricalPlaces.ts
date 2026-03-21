@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHistoricalPlaces } from "../services/places.service";
+import { getHistoricalPlaces } from "../services/places.services";
 import { MapItem } from "../types/map";
 
 export function useHistoricalPlaces() {
