@@ -1,8 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from "react-native";
-import MapView, { Marker, Region } from "react-native-maps";
 import * as Location from "expo-location";
+import { useLocalSearchParams } from "expo-router";
 import { getDistance } from "geolib";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import MapView, { Marker, Region } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import CategoryFilter from "../../components/CategoryFilter";
 import LandmarkDetailCard from "../../components/LandmarkDetailCard";
@@ -38,6 +47,13 @@ export default function MapScreen() {
 
 
   // ==============================
+  // Safe Area Insets
+  // ==============================
+
+  const insets = useSafeAreaInsets();
+
+
+  // ==============================
   // State
   // ==============================
 
@@ -51,6 +67,20 @@ export default function MapScreen() {
 
 
   // ==============================
+  // Route Params
+  // ==============================
+
+  const params = useLocalSearchParams<{
+    category?: string;
+    focusTitle?: string;
+    focusLat?: string;
+    focusLng?: string;
+    focusKey?: string;
+    nearby?: string;
+  }>();
+
+
+  // ==============================
   // Data Loading
   // ==============================
 
@@ -58,25 +88,16 @@ export default function MapScreen() {
 
 
   // ==============================
-  // Effects
+  // Helper Functions
   // ==============================
 
-  // Run once on mount → get user location
-  useEffect(() => {
-    getUserLocation();
-  }, []);
-
-  // Hide nearby list when user starts typing
-  useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      setShowNearbyPlaces(false);
-    }
-  }, [searchQuery]);
-
-
-  // ==============================
-  // Helper Functions (Actions)
-  // ==============================
+  const normalizeTitle = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/’/g, "'")
+      .trim();
 
   const getUserLocation = async () => {
     try {
@@ -129,6 +150,124 @@ export default function MapScreen() {
         return "gray";
     }
   };
+
+  const findPlaceByFocusParams = () => {
+    if (places.length === 0) return null;
+
+    const focusTitle = params.focusTitle
+      ? normalizeTitle(String(params.focusTitle))
+      : null;
+
+    const focusLat = params.focusLat ? Number(params.focusLat) : null;
+    const focusLng = params.focusLng ? Number(params.focusLng) : null;
+
+    // Try exact title match first
+    if (focusTitle) {
+      const titleMatch = places.find(
+        (item) => normalizeTitle(item.title) === focusTitle
+      );
+
+      if (titleMatch) {
+        return titleMatch;
+      }
+    }
+
+    // Fallback: find closest place by coordinates
+    if (
+      focusLat !== null &&
+      !Number.isNaN(focusLat) &&
+      focusLng !== null &&
+      !Number.isNaN(focusLng)
+    ) {
+      let closestPlace: MapItem | null = null;
+      let smallestDistance = Number.POSITIVE_INFINITY;
+
+      for (const place of places) {
+        const distance = getDistance(
+          { latitude: focusLat, longitude: focusLng },
+          { latitude: place.latitude, longitude: place.longitude }
+        );
+
+        if (distance < smallestDistance) {
+          smallestDistance = distance;
+          closestPlace = place;
+        }
+      }
+
+      if (closestPlace && smallestDistance < 800) {
+        return closestPlace;
+      }
+    }
+
+    return null;
+  };
+
+
+  // ==============================
+  // Effects
+  // ==============================
+
+  // Run once on mount → get user location
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  // Hide nearby list when user starts typing
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      setShowNearbyPlaces(false);
+    }
+  }, [searchQuery]);
+
+  // Apply category filter coming from another screen
+  useEffect(() => {
+    if (!params.category) return;
+
+    const incomingCategory = String(params.category) as MapCategory | "All";
+    setSelectedCategory(incomingCategory);
+    setSelectedItem(null);
+    setShowNearbyPlaces(false);
+  }, [params.category]);
+
+  // Open nearby places panel coming from another screen
+  useEffect(() => {
+    if (params.nearby === "1") {
+      setShowNearbyPlaces(true);
+      setSelectedItem(null);
+    }
+  }, [params.nearby]);
+
+  // Focus a place coming from another screen and open its detail card
+  useEffect(() => {
+    if (!params.focusTitle && !params.focusLat && !params.focusLng) return;
+    if (places.length === 0) return;
+
+    const place = findPlaceByFocusParams();
+    if (!place) return;
+
+    if (selectedCategory !== "All" && place.category !== selectedCategory) {
+      setSelectedCategory("All");
+    }
+
+    setSelectedItem(place);
+    setShowNearbyPlaces(false);
+
+    const newRegion: Region = {
+      latitude: place.latitude,
+      longitude: place.longitude,
+      latitudeDelta: 0.025,
+      longitudeDelta: 0.025,
+    };
+
+    setRegion(newRegion);
+    mapRef.current?.animateToRegion(newRegion, 1000);
+  }, [
+    params.focusKey,
+    params.focusTitle,
+    params.focusLat,
+    params.focusLng,
+    places,
+  ]);
 
 
   // ==============================
@@ -205,6 +344,10 @@ export default function MapScreen() {
         showsUserLocation
         showsMyLocationButton={false}
         toolbarEnabled={false}
+        onPress={() => {
+          setSelectedItem(null);
+          setShowNearbyPlaces(false);
+        }}
       >
         {filteredPlaces.map((place) => (
           <Marker
@@ -213,9 +356,21 @@ export default function MapScreen() {
               latitude: place.latitude,
               longitude: place.longitude,
             }}
-            onPress={() => setSelectedItem(place)}
-            pinColor={getCategoryColor(place.category)}
+            onPress={() => {
+              setSelectedItem(place);
+              setShowNearbyPlaces(false);
 
+              const newRegion: Region = {
+                latitude: place.latitude,
+                longitude: place.longitude,
+                latitudeDelta: 0.025,
+                longitudeDelta: 0.025,
+              };
+
+              setRegion(newRegion);
+              mapRef.current?.animateToRegion(newRegion, 700);
+            }}
+            pinColor={getCategoryColor(place.category)}
           />
         ))}
       </MapView>
@@ -226,17 +381,25 @@ export default function MapScreen() {
       {/* ============================== */}
 
       {userLocation && (
-        <MyLocationButton
-          onPress={() => {
-            const newRegion: Region = {
-              ...userLocation,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            };
+        <View
+          style={[
+            styles.locationButtonWrapper,
+            { bottom: insets.bottom + 90 },
+          ]}
+        >
+          <MyLocationButton
+            onPress={() => {
+              const newRegion: Region = {
+                ...userLocation,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              };
 
-            mapRef.current?.animateToRegion(newRegion, 1000);
-          }}
-        />
+              setRegion(newRegion);
+              mapRef.current?.animateToRegion(newRegion, 1000);
+            }}
+          />
+        </View>
       )}
 
 
@@ -244,7 +407,12 @@ export default function MapScreen() {
       {/* Top Overlay */}
       {/* ============================== */}
 
-      <View style={styles.topOverlay}>
+      <View
+        style={[
+          styles.topOverlay,
+          { top: insets.top + 10 },
+        ]}
+      >
 
         {locationStatus && (
           <Text style={styles.statusText}>{locationStatus}</Text>
@@ -290,37 +458,27 @@ export default function MapScreen() {
           contentContainerStyle={styles.legendContainer}
         >
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#2563eb" }]}>
-              {/* <Text style={styles.legendBadgeText}>MS</Text> */}
-            </View>
+            <View style={[styles.legendBadge, { backgroundColor: "#2563eb" }]} />
             <Text style={styles.legendText}>Mosque</Text>
           </View>
 
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#7c3aed" }]}>
-              {/* <Text style={styles.legendBadgeText}>PL</Text> */}
-            </View>
+            <View style={[styles.legendBadge, { backgroundColor: "#7c3aed" }]} />
             <Text style={styles.legendText}>Palace</Text>
           </View>
 
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#059669" }]}>
-              {/* <Text style={styles.legendBadgeText}>MU</Text> */}
-            </View>
+            <View style={[styles.legendBadge, { backgroundColor: "#059669" }]} />
             <Text style={styles.legendText}>Museum</Text>
           </View>
 
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#dc2626" }]}>
-              {/* <Text style={styles.legendBadgeText}>EV</Text> */}
-            </View>
+            <View style={[styles.legendBadge, { backgroundColor: "#dc2626" }]} />
             <Text style={styles.legendText}>Event</Text>
           </View>
 
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#d97706" }]}>
-              {/* <Text style={styles.legendBadgeText}>MN</Text> */}
-            </View>
+            <View style={[styles.legendBadge, { backgroundColor: "#d97706" }]} />
             <Text style={styles.legendText}>Monument</Text>
           </View>
         </ScrollView>
@@ -330,24 +488,28 @@ export default function MapScreen() {
           showNearbyPlaces={showNearbyPlaces}
           searchQuery={searchQuery}
           nearbyPlaces={nearbyPlaces}
-          onToggle={() => setShowNearbyPlaces((prev) => !prev)}
+          onToggle={() => {
+            setShowNearbyPlaces((prev) => !prev);
+            setSelectedItem(null);
+          }}
           onSelectPlace={(placeId) => {
             const place = nearbyPlaces.find((item) => item.id === placeId);
             if (!place) return;
 
             setSelectedItem(place);
+            setShowNearbyPlaces(false);
 
             const newRegion: Region = {
               latitude: place.latitude,
               longitude: place.longitude,
-              latitudeDelta: 0.03,
-              longitudeDelta: 0.03,
+              latitudeDelta: 0.025,
+              longitudeDelta: 0.025,
             };
 
+            setRegion(newRegion);
             mapRef.current?.animateToRegion(newRegion, 1000);
           }}
         />
-
       </View>
 
 
@@ -356,11 +518,18 @@ export default function MapScreen() {
       {/* ============================== */}
 
       {selectedItem && (
-        <LandmarkDetailCard
-          item={selectedItem}
-          distanceKm={selectedItemDistanceKm}
-          onClose={() => setSelectedItem(null)}
-        />
+        <View
+          style={[
+            styles.detailCardWrapper,
+            { bottom: insets.bottom + 76 },
+          ]}
+        >
+          <LandmarkDetailCard
+            item={selectedItem}
+            distanceKm={selectedItemDistanceKm}
+            onClose={() => setSelectedItem(null)}
+          />
+        </View>
       )}
 
     </View>
@@ -375,6 +544,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f3f4f6",
   },
 
   map: {
@@ -383,7 +553,6 @@ const styles = StyleSheet.create({
 
   topOverlay: {
     position: "absolute",
-    top: 50,
     left: 12,
     right: 12,
     backgroundColor: "rgba(255,255,255,0.96)",
@@ -452,15 +621,20 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
 
-  legendBadgeText: {
-    color: "white",
-    fontSize: 9,
-    fontWeight: "700",
-  },
-
   legendText: {
     fontSize: 11,
     color: "#374151",
     fontWeight: "500",
+  },
+
+  locationButtonWrapper: {
+    position: "absolute",
+    right: 16,
+  },
+
+  detailCardWrapper: {
+    position: "absolute",
+    left: 12,
+    right: 12,
   },
 });
