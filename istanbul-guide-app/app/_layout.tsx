@@ -1,11 +1,13 @@
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import React from "react";
 
-
-// ==============================
-// Component
-// ==============================
-
 export default function RootLayout() {
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
 }

@@ -1,8 +1,10 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import * as Location from "expo-location";
 import { useLocalSearchParams } from "expo-router";
 import { getDistance } from "geolib";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,17 +15,10 @@ import {
 import MapView, { Marker, Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import CategoryFilter from "../../components/CategoryFilter";
 import LandmarkDetailCard from "../../components/LandmarkDetailCard";
 import MyLocationButton from "../../components/MyLocationButton";
-import NearbyPlacesPanel from "../../components/NearbyPlacesPanel";
 import { useHistoricalPlaces } from "../../hooks/useHistoricalPlaces";
 import { MapCategory, MapItem } from "../../types/map";
-
-
-// ==============================
-// Constants
-// ==============================
 
 const ISTANBUL_REGION: Region = {
   latitude: 41.0082,
@@ -32,30 +27,19 @@ const ISTANBUL_REGION: Region = {
   longitudeDelta: 0.22,
 };
 
-
-// ==============================
-// Component
-// ==============================
+const ALL_CATEGORIES: Array<MapCategory | "All"> = [
+  "All",
+  "Mosque",
+  "Palace",
+  "Museum",
+  "Historical Event",
+  "Monument",
+];
 
 export default function MapScreen() {
-
-  // ==============================
-  // Refs
-  // ==============================
-
   const mapRef = useRef<MapView | null>(null);
-
-
-  // ==============================
-  // Safe Area Insets
-  // ==============================
-
   const insets = useSafeAreaInsets();
-
-
-  // ==============================
-  // State
-  // ==============================
+  const tabBarHeight = useBottomTabBarHeight();
 
   const [region, setRegion] = useState<Region>(ISTANBUL_REGION);
   const [selectedCategory, setSelectedCategory] = useState<MapCategory | "All">("All");
@@ -64,11 +48,6 @@ export default function MapScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
-
-
-  // ==============================
-  // Route Params
-  // ==============================
 
   const params = useLocalSearchParams<{
     category?: string;
@@ -79,17 +58,7 @@ export default function MapScreen() {
     nearby?: string;
   }>();
 
-
-  // ==============================
-  // Data Loading
-  // ==============================
-
   const { places, loading, error } = useHistoricalPlaces();
-
-
-  // ==============================
-  // Helper Functions
-  // ==============================
 
   const normalizeTitle = (value: string) =>
     value
@@ -129,7 +98,7 @@ export default function MapScreen() {
       mapRef.current?.animateToRegion(newRegion, 1000);
 
       setLocationStatus("");
-    } catch (error) {
+    } catch {
       setLocationStatus("Could not fetch location. Showing Istanbul by default.");
     }
   };
@@ -137,17 +106,17 @@ export default function MapScreen() {
   const getCategoryColor = (category: MapCategory) => {
     switch (category) {
       case "Mosque":
-        return "blue";
+        return "#2563eb";
       case "Palace":
-        return "purple";
+        return "#7c3aed";
       case "Museum":
-        return "green";
+        return "#059669";
       case "Historical Event":
-        return "red";
+        return "#dc2626";
       case "Monument":
-        return "orange";
+        return "#d97706";
       default:
-        return "gray";
+        return "#6b7280";
     }
   };
 
@@ -161,18 +130,13 @@ export default function MapScreen() {
     const focusLat = params.focusLat ? Number(params.focusLat) : null;
     const focusLng = params.focusLng ? Number(params.focusLng) : null;
 
-    // Try exact title match first
     if (focusTitle) {
       const titleMatch = places.find(
         (item) => normalizeTitle(item.title) === focusTitle
       );
-
-      if (titleMatch) {
-        return titleMatch;
-      }
+      if (titleMatch) return titleMatch;
     }
 
-    // Fallback: find closest place by coordinates
     if (
       focusLat !== null &&
       !Number.isNaN(focusLat) &&
@@ -202,24 +166,16 @@ export default function MapScreen() {
     return null;
   };
 
-
-  // ==============================
-  // Effects
-  // ==============================
-
-  // Run once on mount → get user location
   useEffect(() => {
     getUserLocation();
   }, []);
 
-  // Hide nearby list when user starts typing
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
       setShowNearbyPlaces(false);
     }
   }, [searchQuery]);
 
-  // Apply category filter coming from another screen
   useEffect(() => {
     if (!params.category) return;
 
@@ -229,7 +185,6 @@ export default function MapScreen() {
     setShowNearbyPlaces(false);
   }, [params.category]);
 
-  // Open nearby places panel coming from another screen
   useEffect(() => {
     if (params.nearby === "1") {
       setShowNearbyPlaces(true);
@@ -237,7 +192,6 @@ export default function MapScreen() {
     }
   }, [params.nearby]);
 
-  // Focus a place coming from another screen and open its detail card
   useEffect(() => {
     if (!params.focusTitle && !params.focusLat && !params.focusLng) return;
     if (places.length === 0) return;
@@ -268,11 +222,6 @@ export default function MapScreen() {
     params.focusLng,
     places,
   ]);
-
-
-  // ==============================
-  // Derived Data
-  // ==============================
 
   const filteredPlaces = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -325,18 +274,10 @@ export default function MapScreen() {
       .slice(0, 5);
   }, [userLocation, filteredPlaces]);
 
-
-  // ==============================
-  // Render
-  // ==============================
+  const bottomOffset = tabBarHeight + insets.bottom + 18;
 
   return (
     <View style={styles.container}>
-
-      {/* ============================== */}
-      {/* Map */}
-      {/* ============================== */}
-
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -375,16 +316,11 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-
-      {/* ============================== */}
-      {/* My Location Button */}
-      {/* ============================== */}
-
       {userLocation && (
         <View
           style={[
             styles.locationButtonWrapper,
-            { bottom: insets.bottom + 90 },
+            { bottom: bottomOffset + 78 },
           ]}
         >
           <MyLocationButton
@@ -402,39 +338,30 @@ export default function MapScreen() {
         </View>
       )}
 
-
-      {/* ============================== */}
-      {/* Top Overlay */}
-      {/* ============================== */}
-
       <View
         style={[
           styles.topOverlay,
-          { top: insets.top + 10 },
+          { top: insets.top + 18 },
         ]}
       >
+        <View style={styles.headerRow}>
+          <Text style={styles.panelTitle}>Discover Istanbul</Text>
+          <Text style={styles.panelCount}>{filteredPlaces.length} places</Text>
+        </View>
 
-        {locationStatus && (
-          <Text style={styles.statusText}>{locationStatus}</Text>
-        )}
+        {!!locationStatus && <Text style={styles.statusText}>{locationStatus}</Text>}
+        {!!loading && <Text style={styles.statusText}>Loading places...</Text>}
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-        {loading && (
-          <Text style={styles.statusText}>Loading places...</Text>
-        )}
-
-        {error && (
-          <Text style={styles.errorText}>{error}</Text>
-        )}
-
-        {/* Search */}
-        <View style={styles.searchContainer}>
+        <View style={styles.searchShell}>
+          <Text style={styles.searchIcon}>⌕</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Search landmarks or events"
+            placeholderTextColor="#94a3b8"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-
           {searchQuery.length > 0 && (
             <TouchableOpacity
               style={styles.clearButton}
@@ -445,83 +372,131 @@ export default function MapScreen() {
           )}
         </View>
 
-        {/* Category Filter */}
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-
-        {/* Category Legends */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.legendContainer}
+          contentContainerStyle={styles.categoryRow}
         >
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#2563eb" }]} />
-            <Text style={styles.legendText}>Mosque</Text>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#7c3aed" }]} />
-            <Text style={styles.legendText}>Palace</Text>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#059669" }]} />
-            <Text style={styles.legendText}>Museum</Text>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#dc2626" }]} />
-            <Text style={styles.legendText}>Event</Text>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: "#d97706" }]} />
-            <Text style={styles.legendText}>Monument</Text>
-          </View>
+          {ALL_CATEGORIES.map((category) => {
+            const isActive = selectedCategory === category;
+            return (
+              <Pressable
+                key={category}
+                onPress={() => setSelectedCategory(category)}
+                style={[
+                  styles.categoryChip,
+                  isActive && styles.categoryChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    isActive && styles.categoryChipTextActive,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
-        {/* Nearby Toggle */}
-        <NearbyPlacesPanel
-          showNearbyPlaces={showNearbyPlaces}
-          searchQuery={searchQuery}
-          nearbyPlaces={nearbyPlaces}
-          onToggle={() => {
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.legendRow}
+        >
+          {(["Mosque", "Palace", "Museum", "Historical Event", "Monument"] as MapCategory[]).map(
+            (item) => (
+              <View key={item} style={styles.legendChip}>
+                <View
+                  style={[
+                    styles.legendDot,
+                    { backgroundColor: getCategoryColor(item) },
+                  ]}
+                />
+                <Text style={styles.legendText}>
+                  {item === "Historical Event" ? "Event" : item}
+                </Text>
+              </View>
+            )
+          )}
+        </ScrollView>
+
+        <TouchableOpacity
+          style={styles.nearbyButton}
+          onPress={() => {
             setShowNearbyPlaces((prev) => !prev);
             setSelectedItem(null);
           }}
-          onSelectPlace={(placeId) => {
-            const place = nearbyPlaces.find((item) => item.id === placeId);
-            if (!place) return;
+        >
+          <Text style={styles.nearbyButtonText}>
+            {showNearbyPlaces ? "Hide Nearby Places" : "Show Nearby Places"}
+          </Text>
+        </TouchableOpacity>
 
-            setSelectedItem(place);
-            setShowNearbyPlaces(false);
+        {showNearbyPlaces && searchQuery.trim().length === 0 && (
+          <View style={styles.nearbyCard}>
+            <Text style={styles.nearbyTitle}>Nearby Places</Text>
 
-            const newRegion: Region = {
-              latitude: place.latitude,
-              longitude: place.longitude,
-              latitudeDelta: 0.025,
-              longitudeDelta: 0.025,
-            };
+            {nearbyPlaces.length === 0 ? (
+              <Text style={styles.nearbyEmpty}>No nearby places found.</Text>
+            ) : (
+              nearbyPlaces.map((place, index) => (
+                <TouchableOpacity
+                  key={place.id}
+                  style={[
+                    styles.nearbyItem,
+                    index === nearbyPlaces.length - 1 && styles.nearbyItemLast,
+                  ]}
+                  onPress={() => {
+                    setSelectedItem(place);
+                    setShowNearbyPlaces(false);
 
-            setRegion(newRegion);
-            mapRef.current?.animateToRegion(newRegion, 1000);
-          }}
-        />
+                    const newRegion: Region = {
+                      latitude: place.latitude,
+                      longitude: place.longitude,
+                      latitudeDelta: 0.025,
+                      longitudeDelta: 0.025,
+                    };
+
+                    setRegion(newRegion);
+                    mapRef.current?.animateToRegion(newRegion, 1000);
+                  }}
+                >
+                  <View style={styles.nearbyItemLeft}>
+                    <View
+                      style={[
+                        styles.nearbyItemDot,
+                        { backgroundColor: getCategoryColor(place.category) },
+                      ]}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={styles.nearbyItemTitle}>
+                        {place.title}
+                      </Text>
+                      <Text style={styles.nearbyItemMeta}>
+                        {place.category}
+                        {place.period ? ` • ${place.period}` : ""}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.nearbyDistance}>
+                    {place.distance.toFixed(1)} km
+                  </Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        )}
       </View>
-
-
-      {/* ============================== */}
-      {/* Detail Card */}
-      {/* ============================== */}
 
       {selectedItem && (
         <View
           style={[
             styles.detailCardWrapper,
-            { bottom: insets.bottom + 76 },
+            { bottom: bottomOffset },
           ]}
         >
           <LandmarkDetailCard
@@ -531,20 +506,14 @@ export default function MapScreen() {
           />
         </View>
       )}
-
     </View>
   );
 }
 
-
-// ==============================
-// Styles
-// ==============================
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#e5e7eb",
   },
 
   map: {
@@ -553,78 +522,221 @@ const styles = StyleSheet.create({
 
   topOverlay: {
     position: "absolute",
-    left: 12,
-    right: 12,
+    left: 14,
+    right: 14,
     backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    shadowColor: "#0f172a",
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  panelTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+
+  panelCount: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#164e63",
   },
 
   statusText: {
     fontSize: 12,
+    color: "#475569",
     marginBottom: 6,
-    color: "#374151",
   },
 
   errorText: {
     fontSize: 12,
-    marginBottom: 6,
     color: "#dc2626",
+    marginBottom: 6,
   },
 
-  searchContainer: {
+  searchShell: {
     position: "relative",
-    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eef2f7",
+    borderRadius: 18,
+    minHeight: 56,
+    paddingLeft: 14,
+    paddingRight: 44,
+    marginBottom: 14,
+  },
+
+  searchIcon: {
+    fontSize: 24,
+    color: "#94a3b8",
+    marginRight: 8,
+    marginTop: -2,
   },
 
   searchInput: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    paddingRight: 42,
-    fontSize: 15,
+    flex: 1,
+    fontSize: 16,
+    color: "#0f172a",
   },
 
   clearButton: {
     position: "absolute",
-    right: 12,
-    top: 9,
+    right: 14,
+    top: 16,
   },
 
   clearButtonText: {
     fontSize: 16,
-    color: "#6b7280",
     fontWeight: "700",
+    color: "#64748b",
   },
 
-  legendContainer: {
-    paddingTop: 6,
-    paddingBottom: 2,
-    gap: 8,
+  categoryRow: {
+    paddingBottom: 6,
   },
 
-  legendItem: {
+  categoryChip: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 999,
+    marginRight: 10,
+  },
+
+  categoryChipActive: {
+    backgroundColor: "#0b132b",
+  },
+
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+
+  categoryChipTextActive: {
+    color: "#ffffff",
+  },
+
+  legendRow: {
+    paddingTop: 2,
+    paddingBottom: 12,
+  },
+
+  legendChip: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#f8fafc",
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 10,
+  },
+
+  legendDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     marginRight: 8,
   },
 
-  legendBadge: {
-    minWidth: 24,
-    height: 24,
-    paddingHorizontal: 6,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 5,
+  legendText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748b",
   },
 
-  legendText: {
-    fontSize: 11,
-    color: "#374151",
-    fontWeight: "500",
+  nearbyButton: {
+    backgroundColor: "#0b132b",
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+  },
+
+  nearbyButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  nearbyCard: {
+    marginTop: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 22,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#eef2f7",
+  },
+
+  nearbyTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 10,
+  },
+
+  nearbyEmpty: {
+    fontSize: 14,
+    color: "#64748b",
+  },
+
+  nearbyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+
+  nearbyItemLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 2,
+  },
+
+  nearbyItemLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 12,
+  },
+
+  nearbyItemDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+
+  nearbyItemTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+
+  nearbyItemMeta: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "#64748b",
+  },
+
+  nearbyDistance: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0f766e",
   },
 
   locationButtonWrapper: {

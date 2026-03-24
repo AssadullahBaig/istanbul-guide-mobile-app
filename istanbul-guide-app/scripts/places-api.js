@@ -2,214 +2,191 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
+const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3000;
-
-// south,west,north,east
 const ISTANBUL_BBOX = "40.80,28.50,41.35,29.40";
 
 const REQUIRED_PLACES = [
     {
-        id: "seed-hagia-sophia",
-        type: "landmark",
+        id: "required-hagia-sophia",
         title: "Hagia Sophia",
-        description: "Historic Byzantine cathedral later converted into a mosque and museum.",
+        description:
+            "One of Istanbul’s most iconic historical landmarks, originally built as a Byzantine cathedral and later converted into a mosque.",
         category: "Mosque",
+        period: "Byzantine / Ottoman",
         latitude: 41.0086,
         longitude: 28.9802,
-        period: "Byzantine / Ottoman",
     },
     {
-        id: "seed-blue-mosque",
-        type: "landmark",
+        id: "required-blue-mosque",
         title: "Blue Mosque",
-        description: "Famous Ottoman mosque known for its blue Iznik tiles.",
+        description:
+            "A famous Ottoman imperial mosque known for its six minarets and beautiful blue İznik tiles.",
         category: "Mosque",
-        latitude: 41.0055,
-        longitude: 28.9768,
         period: "Ottoman",
+        latitude: 41.0054,
+        longitude: 28.9768,
     },
     {
-        id: "seed-topkapi-palace",
-        type: "landmark",
+        id: "required-topkapi-palace",
         title: "Topkapi Palace",
-        description: "Residence of Ottoman sultans for nearly 400 years.",
+        description:
+            "The main residence of the Ottoman sultans for centuries, now a major museum complex.",
         category: "Palace",
+        period: "Ottoman",
         latitude: 41.0115,
         longitude: 28.9833,
-        period: "Ottoman",
     },
     {
-        id: "seed-suleymaniye",
-        type: "landmark",
-        title: "Süleymaniye Mosque",
-        description: "A grand Ottoman mosque designed by Mimar Sinan.",
-        category: "Mosque",
-        latitude: 41.0165,
-        longitude: 28.9642,
-        period: "Ottoman",
-    },
-    {
-        id: "seed-basilica-cistern",
-        type: "landmark",
-        title: "Basilica Cistern",
-        description: "Ancient underground water cistern from the Byzantine era.",
+        id: "required-galata-tower",
+        title: "Galata Tower",
+        description:
+            "A medieval stone tower offering panoramic views of Istanbul and symbolizing the Galata district.",
         category: "Monument",
+        period: "Medieval / Ottoman",
+        latitude: 41.0256,
+        longitude: 28.9741,
+    },
+    {
+        id: "required-basilica-cistern",
+        title: "Basilica Cistern",
+        description:
+            "An ancient underground water reservoir built during the Byzantine era beneath Istanbul.",
+        category: "Museum",
+        period: "Byzantine",
         latitude: 41.0084,
         longitude: 28.9779,
-        period: "Byzantine",
     },
     {
-        id: "seed-galata-tower",
-        type: "landmark",
-        title: "Galata Tower",
-        description: "Historic stone tower overlooking Istanbul.",
-        category: "Monument",
-        latitude: 41.0256,
-        longitude: 28.9744,
-        period: "Medieval",
-    },
-    {
-        id: "seed-dolmabahce",
-        type: "landmark",
+        id: "required-dolmabahce-palace",
         title: "Dolmabahçe Palace",
-        description: "Lavish 19th-century Ottoman palace on the Bosphorus.",
+        description:
+            "A grand 19th-century Ottoman palace on the Bosphorus known for its European-inspired design.",
         category: "Palace",
+        period: "Ottoman",
         latitude: 41.0392,
         longitude: 29.0007,
+    },
+    {
+        id: "required-suleymaniye-mosque",
+        title: "Süleymaniye Mosque",
+        description:
+            "A magnificent Ottoman imperial mosque designed by Mimar Sinan, dominating Istanbul’s skyline.",
+        category: "Mosque",
         period: "Ottoman",
+        latitude: 41.0162,
+        longitude: 28.9637,
     },
     {
-        id: "seed-beylerbeyi",
-        type: "landmark",
-        title: "Beylerbeyi Palace",
-        description: "Ottoman imperial summer palace on the Asian shore.",
-        category: "Palace",
-        latitude: 41.0424,
-        longitude: 29.0419,
-        period: "Ottoman",
-    },
-    {
-        id: "seed-chora",
-        type: "landmark",
-        title: "Chora Church",
-        description: "Famous for its Byzantine mosaics and frescoes.",
-        category: "Museum",
-        latitude: 41.0317,
-        longitude: 28.9392,
-        period: "Byzantine",
-    },
-    {
-        id: "seed-maiden-tower",
-        type: "landmark",
+        id: "required-maiden-tower",
         title: "Maiden’s Tower",
-        description: "Historic tower on a small islet in the Bosphorus.",
+        description:
+            "A historic tower on a small islet in the Bosphorus, associated with legends and maritime history.",
         category: "Monument",
+        period: "Byzantine / Ottoman",
         latitude: 41.0211,
         longitude: 29.0041,
-        period: "Byzantine / Ottoman",
+    },
+    {
+        id: "required-grand-bazaar",
+        title: "Grand Bazaar",
+        description:
+            "One of the world’s oldest and largest covered markets, central to Istanbul’s trading history.",
+        category: "Monument",
+        period: "Ottoman",
+        latitude: 41.0108,
+        longitude: 28.968,
+    },
+    {
+        id: "required-chora-church",
+        title: "Chora Church",
+        description:
+            "A historic Byzantine church famous for its mosaics and frescoes, later converted into a mosque.",
+        category: "Museum",
+        period: "Byzantine",
+        latitude: 41.0322,
+        longitude: 28.9394,
     },
 ];
 
-function mapCategory(tags = {}, title = "") {
-    const lowerTitle = title.toLowerCase();
+function getCategory(tags = {}) {
+    const name = `${tags.historic || ""} ${tags.tourism || ""} ${tags.building || ""} ${tags.amenity || ""}`.toLowerCase();
 
-    if (tags.tourism === "museum") return "Museum";
-
-    if (
-        lowerTitle.includes("palace") ||
-        lowerTitle.includes("saray")
-    ) {
-        return "Palace";
+    if (name.includes("mosque") || tags.building === "mosque") return "Mosque";
+    if (name.includes("palace")) return "Palace";
+    if (name.includes("museum") || tags.tourism === "museum") return "Museum";
+    if (name.includes("monument") || name.includes("tower") || name.includes("memorial")) {
+        return "Monument";
     }
-
-    if (
-        lowerTitle.includes("mosque") ||
-        lowerTitle.includes("camii") ||
-        lowerTitle.includes("cami") ||
-        lowerTitle.includes("ayasofya") ||
-        tags.building === "mosque" ||
-        tags.amenity === "place_of_worship" ||
-        tags.religion === "muslim"
-    ) {
-        return "Mosque";
-    }
+    if (tags.historic) return "Historical Event";
 
     return "Monument";
 }
 
-function buildPeriod(tags = {}) {
-    return (
-        tags.start_date ||
-        tags.opening_date ||
-        tags.period ||
-        tags["heritage:period"] ||
-        tags.year_of_construction ||
-        undefined
-    );
+function getPeriod(tags = {}) {
+    const text = `${tags.start_date || ""} ${tags.description || ""} ${tags.name || ""}`.toLowerCase();
+
+    if (text.includes("byzant")) return "Byzantine";
+    if (text.includes("ottoman")) return "Ottoman";
+    if (text.includes("roman")) return "Roman";
+    if (text.includes("medieval")) return "Medieval";
+
+    return "Historical";
 }
 
-function buildDescription(tags = {}, title = "", category = "Monument") {
-    const description =
-        tags["description:en"] ||
+function getDescription(tags = {}, category) {
+    return (
         tags.description ||
-        tags["alt_name:en"];
-
-    if (description && description.trim().length > 0) {
-        return description;
-    }
-
-    if (category === "Mosque") {
-        return `${title} is a historic mosque in Istanbul.`;
-    }
-
-    if (category === "Palace") {
-        return `${title} is a historic palace in Istanbul.`;
-    }
-
-    if (category === "Museum") {
-        return `${title} is a museum and historical attraction in Istanbul.`;
-    }
-
-    return `${title} is a historical place in Istanbul.`;
-}
-
-function getTitle(tags = {}) {
-    return (
-        tags["name:en"] ||
-        tags.name ||
-        tags.official_name ||
-        tags["official_name:en"] ||
-        null
+        tags["description:en"] ||
+        `${tags.name || "This place"} is a historical site in Istanbul categorized as ${category}.`
     );
 }
 
 function normalizeElement(element) {
     const tags = element.tags || {};
-    const title = getTitle(tags);
-
     const latitude = element.lat ?? element.center?.lat;
     const longitude = element.lon ?? element.center?.lon;
 
-    if (!title || latitude == null || longitude == null) {
+    if (
+        typeof latitude !== "number" ||
+        typeof longitude !== "number" ||
+        !tags.name
+    ) {
         return null;
     }
 
-    const category = mapCategory(tags, title);
+    const category = getCategory(tags);
 
     return {
         id: `osm-${element.type}-${element.id}`,
-        type: "landmark",
-        title,
-        description: buildDescription(tags, title, category),
+        title: tags.name,
+        description: getDescription(tags, category),
         category,
+        period: getPeriod(tags),
         latitude,
         longitude,
-        period: buildPeriod(tags),
     };
+}
+
+function isUsefulPlace(place) {
+    if (!place) return false;
+    if (!place.title || !place.latitude || !place.longitude) return false;
+
+    const blacklist = [
+        "toilet",
+        "bench",
+        "atm",
+        "parking",
+        "restaurant",
+        "cafe",
+        "hotel",
+    ];
+
+    const title = place.title.toLowerCase();
+    return !blacklist.some((word) => title.includes(word));
 }
 
 function normalizeTitle(title) {
@@ -223,33 +200,23 @@ function normalizeTitle(title) {
 
 function dedupePlaces(places) {
     const seen = new Set();
+    const result = [];
 
-    return places.filter((place) => {
+    for (const place of places) {
+        if (!place) continue;
+
         const key = normalizeTitle(place.title);
-        if (seen.has(key)) return false;
+        if (seen.has(key)) continue;
+
         seen.add(key);
-        return true;
-    });
-}
-
-function isUsefulPlace(place) {
-    if (!place) return false;
-
-    const lowerTitle = place.title.toLowerCase();
-
-    if (
-        lowerTitle === "yes" ||
-        lowerTitle === "building" ||
-        lowerTitle === "unknown"
-    ) {
-        return false;
+        result.push(place);
     }
 
-    return true;
+    return result;
 }
 
 app.get("/health", (_req, res) => {
-    res.json({ ok: true });
+    res.send("OK");
 });
 
 app.get("/api/places", async (_req, res) => {
@@ -289,8 +256,7 @@ out center tags;
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`Overpass error: ${response.status} ${text}`);
+            throw new Error(`Overpass error: ${response.status}`);
         }
 
         const data = await response.json();
@@ -302,19 +268,22 @@ out center tags;
         const mergedPlaces = dedupePlaces([
             ...REQUIRED_PLACES,
             ...livePlaces,
-        ]).sort((a, b) => a.title.localeCompare(b.title))
+        ])
+            .sort((a, b) => a.title.localeCompare(b.title))
             .slice(0, 120);
 
         res.json(mergedPlaces);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: "Failed to fetch live places data",
-            error: error instanceof Error ? error.message : "Unknown error",
-        });
+        console.error("Overpass failed, returning seeded places only:", error);
+
+        const fallbackPlaces = dedupePlaces([...REQUIRED_PLACES]).sort((a, b) =>
+            a.title.localeCompare(b.title)
+        );
+
+        res.json(fallbackPlaces);
     }
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Places API running on http://0.0.0.0:${PORT}`);
+    console.log(`Places API running on port ${PORT}`);
 });
