@@ -1,0 +1,12 @@
+{
+    "name": "places-api",
+    "version": "1.0.0",
+    "main": "places-api.js",
+    "scripts": {
+        "start": "node places-api.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^5.1.0"
+    }
+}

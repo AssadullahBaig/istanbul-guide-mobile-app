@@ -6,12 +6,41 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// SUPABASE AUTHENTICATION SERVICE
+import { authService } from "../services/auth.services";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      
+    
+      await authService.signIn(email, password);
+      
+      
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      // If it fails, show the Supabase error message
+      setErrorMessage(error.message || "Invalid login credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,6 +61,7 @@ export default function SignInScreen() {
             style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!loading}
           />
         </View>
 
@@ -44,21 +74,41 @@ export default function SignInScreen() {
             placeholderTextColor="#94a3b8"
             style={styles.input}
             secureTextEntry
+            editable={!loading}
           />
         </View>
 
+       
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
           activeOpacity={0.9}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={handleSignIn}
+          disabled={loading}
         >
-          <Text style={styles.primaryButtonText}>Sign In</Text>
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Sign In</Text>
+          )}
         </TouchableOpacity>
+
+    
+        <View style={styles.signUpContainer}>
+          <Text style={styles.signUpText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/sign-up')} disabled={loading}>
+            <Text style={styles.signUpLink}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.85}
           onPress={() => router.replace("/(tabs)")}
+          disabled={loading}
         >
           <Text style={styles.secondaryButtonText}>Skip for now</Text>
         </TouchableOpacity>
@@ -121,6 +171,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#102733",
   },
+  errorText: {
+    color: "#dc2626",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 10,
+    textAlign: "center",
+  },
   primaryButton: {
     backgroundColor: "#103c4a",
     borderRadius: 18,
@@ -128,9 +185,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
   primaryButtonText: {
     color: "#ffffff",
     fontSize: 16,
+    fontWeight: "800",
+  },
+  // YENİ EKLENEN STİLLER
+  signUpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  signUpText: {
+    color: "#66757d",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  signUpLink: {
+    color: "#155e75",
+    fontSize: 14,
     fontWeight: "800",
   },
   secondaryButton: {

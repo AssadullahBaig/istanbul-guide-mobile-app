@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -7,49 +7,77 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-
-import { historicalPlaces } from "../../constants/historicalPlaces";
-import { MapCategory } from "../../types/map";
-
-const categories: MapCategory[] = [
-  "Mosque",
-  "Palace",
-  "Museum",
-  "Historical Event",
-  "Monument",
-];
+import { supabase } from '../../services/supabase';
+import { getHistoricalPlaces } from '../../services/places.services';
 
 export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [places, setPlaces] = useState<any[]>([]); 
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true); 
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      
+      const placesData = await getHistoricalPlaces();
+      setPlaces(placesData);
+      
+      const { data: categoryData, error } = await supabase
+        .from('categories')
+        .select('name')
+        .order('name');
+
+      if (!error && categoryData) {
+        setCategories(categoryData.map(c => c.name));
+      } else {
+        console.error("Failed to fetch categories", error);
+      }
+      
+      setCategoriesLoading(false);
+      setLoading(false);
+    }
+    
+    loadData();
+  }, []);
 
   const filteredPlaces = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
 
     if (!query) {
-      return historicalPlaces.slice(0, 6);
+      return places.slice(0, 6);
     }
 
-    return historicalPlaces
+    return places
       .filter((item) => {
         return (
-          item.title.toLowerCase().includes(query) ||
-          item.description.toLowerCase().includes(query) ||
-          item.category.toLowerCase().includes(query) ||
+          item.title?.toLowerCase().includes(query) ||
+          item.description?.toLowerCase().includes(query) ||
+          item.category?.toLowerCase().includes(query) ||
           (item.period ?? "").toLowerCase().includes(query)
         );
       })
       .slice(0, 8);
-  }, [searchQuery]);
+  }, [searchQuery, places]);
 
   const openMap = () => {
-    router.push("/");
+    if (searchQuery.trim()) {
+      router.push({
+        pathname: "/",
+        params: { searchTarget: searchQuery.trim() }
+      });
+    } else {
+      router.push("/");
+    }
   };
 
-  const openCategoryOnMap = (category: MapCategory) => {
+  const openCategoryOnMap = (category: string) => {
     router.push({
       pathname: "/",
       params: { category },
@@ -127,22 +155,26 @@ export default function ExploreScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesRow}
-        >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={styles.categoryChip}
-              onPress={() => openCategoryOnMap(category)}
-              activeOpacity={0.85}
+        {categoriesLoading ? (
+            <ActivityIndicator size="small" color="#155e75" style={{ marginBottom: 16 }} />
+        ) : (
+            <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesRow}
             >
-              <Text style={styles.categoryChipText}>{category}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            {categories.map((category) => (
+                <TouchableOpacity
+                key={category}
+                style={styles.categoryChip}
+                onPress={() => openCategoryOnMap(category)}
+                activeOpacity={0.85}
+                >
+                <Text style={styles.categoryChipText}>{category}</Text>
+                </TouchableOpacity>
+            ))}
+            </ScrollView>
+        )}
 
         <View style={styles.quickActionsGrid}>
           <TouchableOpacity style={styles.quickActionCard} onPress={openMap} activeOpacity={0.9}>
@@ -175,7 +207,9 @@ export default function ExploreScreen() {
           </TouchableOpacity>
         </View>
 
-        {filteredPlaces.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator size="large" color="#155e75" style={{ marginTop: 40 }} />
+        ) : filteredPlaces.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>No places matched your search.</Text>
           </View>
