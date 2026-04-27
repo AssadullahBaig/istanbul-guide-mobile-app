@@ -12,8 +12,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // SUPABASE AUTHENTICATION SERVICE
 import { authService } from "../services/auth.services";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 export default function SignInScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,21 +45,32 @@ export default function SignInScreen() {
     }
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'tr' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.langToggle} onPress={toggleLanguage}>
+        <Text style={styles.langToggleText}>
+          {i18n.language === 'en' ? '🇹🇷 TR' : '🇬🇧 EN'}
+        </Text>
+      </TouchableOpacity>
+
       <View style={styles.card}>
-        <Text style={styles.eyebrow}>WELCOME BACK</Text>
-        <Text style={styles.title}>Sign in to continue your journey.</Text>
+        <Text style={styles.eyebrow}>{t('signIn.welcomeBack')}</Text>
+        <Text style={styles.title}>{t('signIn.title')}</Text>
         <Text style={styles.subtitle}>
-          Save favorite places, continue curated trips, and personalize your Istanbul guide.
+          {t('signIn.subtitle')}
         </Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t('signIn.emailLabel')}</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
-            placeholder="you@example.com"
+            placeholder={t('signIn.emailPlaceholder')}
             placeholderTextColor="#94a3b8"
             style={styles.input}
             keyboardType="email-address"
@@ -66,11 +80,11 @@ export default function SignInScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>{t('signIn.passwordLabel')}</Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter your password"
+            placeholder={t('signIn.passwordPlaceholder')}
             placeholderTextColor="#94a3b8"
             style={styles.input}
             secureTextEntry
@@ -92,15 +106,15 @@ export default function SignInScreen() {
           {loading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Text style={styles.primaryButtonText}>{t('signIn.buttonSignIn')}</Text>
           )}
         </TouchableOpacity>
 
     
         <View style={styles.signUpContainer}>
-          <Text style={styles.signUpText}>Don't have an account? </Text>
+          <Text style={styles.signUpText}>{t('signIn.dontHaveAccount')} </Text>
           <TouchableOpacity onPress={() => router.push('/sign-up')} disabled={loading}>
-            <Text style={styles.signUpLink}>Sign Up</Text>
+            <Text style={styles.signUpLink}>{t('signIn.linkSignUp')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -110,7 +124,7 @@ export default function SignInScreen() {
           onPress={() => router.replace("/(tabs)")}
           disabled={loading}
         >
-          <Text style={styles.secondaryButtonText}>Skip for now</Text>
+          <Text style={styles.secondaryButtonText}>{t('signIn.buttonSkip')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -123,6 +137,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#eef2f4",
     padding: 16,
     justifyContent: "center",
+  },
+  langToggle: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    backgroundColor: '#ffffff',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    zIndex: 10,
+  },
+  langToggleText: {
+    fontWeight: '700',
+    color: '#155e75',
+    fontSize: 14,
   },
   card: {
     backgroundColor: "#ffffff",

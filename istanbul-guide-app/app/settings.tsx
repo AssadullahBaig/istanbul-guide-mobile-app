@@ -5,8 +5,11 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, Touchab
 import { colors, radii } from "../constants/theme";
 import { supabase } from "../services/supabase";
 import { userService } from "../services/user.services";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -45,13 +48,18 @@ export default function SettingsScreen() {
     try {
       setSaving(true);
       await userService.saveUserInterests(userId, selectedIds);
-      Alert.alert("Success", "Your personal interests have been saved!");
+      Alert.alert("Success", t('settings.successMessage'));
     } catch (error) {
       console.error("Error saving interests:", error);
-      Alert.alert("Error", "Could not save your preferences.");
+      Alert.alert("Error", t('settings.errorMessage'));
     } finally {
       setSaving(false);
     }
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'tr' : 'en';
+    i18n.changeLanguage(newLang);
   };
 
   if (loading) {
@@ -66,8 +74,32 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       {/* İŞTE BURASI DÜZELTİLDİ: ScrollView eklendi */}
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Your Interests</Text>
-        <Text style={styles.subtitle}>Select the categories you love to get personalized AI recommendations.</Text>
+        
+        <View style={[styles.card, { marginBottom: 24 }]}>
+          <TouchableOpacity 
+            style={styles.row} 
+            activeOpacity={0.7} 
+            onPress={toggleLanguage}
+          >
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconWrap, { backgroundColor: '#e0f2fe' }]}>
+                <Ionicons name="language-outline" size={18} color="#0284c7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{t('settings.language')}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>
+                  {t('settings.languageDesc')}
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontWeight: '800', color: colors.primary, fontSize: 16 }}>
+              {i18n.language === 'en' ? 'EN' : 'TR'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.title}>{t('settings.title')}</Text>
+        <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
 
         <View style={styles.card}>
           {categories.map((cat, index) => {
@@ -101,7 +133,7 @@ export default function SettingsScreen() {
           {saving ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Preferences</Text>
+            <Text style={styles.saveButtonText}>{t('settings.buttonSave')}</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

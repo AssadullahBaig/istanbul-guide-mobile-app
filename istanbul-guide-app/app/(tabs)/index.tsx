@@ -124,15 +124,20 @@ export default function MapScreen() {
       case "Museum":
         return "#059669";
       case "Historical Event":
+      case "Event":
         return "#dc2626";
       case "Monument":
         return "#d97706";
       case "Restaurant":
         return "#eab308";
+      case "Cafe":
+        return "#ea580c";
       case "Park":
         return "#10b981";
       case "Shopping":
         return "#f43f5e";
+      case "Historical":
+        return "#8b5cf6";
       default:
         return "#6b7280";
     }

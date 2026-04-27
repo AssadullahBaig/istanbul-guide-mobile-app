@@ -202,7 +202,7 @@ export default function ExploreScreen() {
           <Text style={styles.sectionTitle}>
             {searchQuery.trim() ? "Search Results" : "Featured Places"}
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/favorites")}>
             <Text style={styles.sectionLink}>Saved</Text>
           </TouchableOpacity>
         </View>

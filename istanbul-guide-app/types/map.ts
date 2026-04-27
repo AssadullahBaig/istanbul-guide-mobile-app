@@ -1,9 +1,4 @@
-export type MapCategory =
-    | "Mosque"
-    | "Palace"
-    | "Museum"
-    | "Historical Event"
-    | "Monument";
+export type MapCategory = string;
 
 export type MapItemType = "landmark" | "event";
 

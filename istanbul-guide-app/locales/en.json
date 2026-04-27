@@ -1,0 +1,26 @@
+{
+  "signIn": {
+    "welcomeBack": "WELCOME BACK",
+    "title": "Sign in to continue your journey.",
+    "subtitle": "Save favorite places, continue curated trips, and personalize your Istanbul guide.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "errorMissingBoth": "Please enter both email and password.",
+    "errorInvalid": "Invalid login credentials.",
+    "buttonSignIn": "Sign In",
+    "dontHaveAccount": "Don't have an account?",
+    "linkSignUp": "Sign Up",
+    "buttonSkip": "Skip for now"
+  },
+  "settings": {
+    "title": "Your Interests",
+    "subtitle": "Select the categories you love to get personalized AI recommendations.",
+    "buttonSave": "Save Preferences",
+    "successMessage": "Your personal interests have been saved!",
+    "errorMessage": "Could not save your preferences.",
+    "language": "Language",
+    "languageDesc": "Switch application language"
+  }
+}

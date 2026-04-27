@@ -1,0 +1,26 @@
+{
+  "signIn": {
+    "welcomeBack": "TEKRAR HOŞGELDİNİZ",
+    "title": "Yolculuğunuza devam etmek için giriş yapın.",
+    "subtitle": "Favori mekanlarınızı kaydedin, seçkin turlara devam edin ve İstanbul rehberinizi kişiselleştirin.",
+    "emailLabel": "E-posta",
+    "emailPlaceholder": "siz@ornek.com",
+    "passwordLabel": "Şifre",
+    "passwordPlaceholder": "Şifrenizi girin",
+    "errorMissingBoth": "Lütfen e-posta ve şifrenizi girin.",
+    "errorInvalid": "Geçersiz giriş bilgileri.",
+    "buttonSignIn": "Giriş Yap",
+    "dontHaveAccount": "Hesabınız yok mu?",
+    "linkSignUp": "Kayıt Ol",
+    "buttonSkip": "Şimdilik atla"
+  },
+  "settings": {
+    "title": "İlgi Alanlarınız",
+    "subtitle": "Yapay zeka tavsiyeleri almak için sevdiğiniz kategorileri seçin.",
+    "buttonSave": "Tercihleri Kaydet",
+    "successMessage": "Kişisel ilgi alanlarınız kaydedildi!",
+    "errorMessage": "Tercihleriniz kaydedilemedi.",
+    "language": "Dil",
+    "languageDesc": "Uygulama dilini değiştirin"
+  }
+}
