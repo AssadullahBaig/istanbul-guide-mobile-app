@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { supabase } from "../../services/supabase";
 import {
@@ -36,6 +37,7 @@ type TripRow = {
 };
 
 export default function FavoritesScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [favoritePlaces, setFavoritePlaces] = useState<FavoritePlace[]>([]);
   const [trips, setTrips] = useState<Array<TripRow & { placeCount: number }>>(
@@ -115,9 +117,9 @@ export default function FavoritesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Saved</Text>
+        <Text style={styles.title}>{t('saved.title')}</Text>
         <Text style={styles.subtitle}>
-          Revisit your favorite places and continue the trips you created.
+          {t('saved.subtitle')}
         </Text>
 
         {loading ? (
@@ -126,14 +128,14 @@ export default function FavoritesScreen() {
           </View>
         ) : (
           <>
-            <Text style={styles.sectionTitle}>Saved Places</Text>
+            <Text style={styles.sectionTitle}>{t('saved.title')}</Text>
 
             {favoritePlaces.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Ionicons name="bookmark-outline" size={28} color="#0f4c5c" />
-                <Text style={styles.emptyTitle}>No saved places yet</Text>
+                <Text style={styles.emptyTitle}>{t('saved.empty')}</Text>
                 <Text style={styles.emptyText}>
-                  Save places from the map detail card and they will appear here.
+                  {t('saved.emptyDesc')}
                 </Text>
               </View>
             ) : (
@@ -165,15 +167,12 @@ export default function FavoritesScreen() {
               ))
             )}
 
-            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>My Trips</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>{t('profile.tripsTitle')}</Text>
 
             {trips.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Ionicons name="map-outline" size={28} color="#0f4c5c" />
-                <Text style={styles.emptyTitle}>No trips yet</Text>
-                <Text style={styles.emptyText}>
-                  Create a trip from a place detail card to see it here.
-                </Text>
+                <Text style={styles.emptyTitle}>{t('card.noTrips')}</Text>
               </View>
             ) : (
               trips.map((trip) => (
@@ -190,7 +189,7 @@ export default function FavoritesScreen() {
                   <View style={styles.listContent}>
                     <Text style={styles.listTitle}>{trip.trip_name}</Text>
                     <Text style={styles.listSubtitle}>
-                      {trip.placeCount} place{trip.placeCount === 1 ? "" : "s"}
+                      {trip.placeCount} {trip.placeCount === 1 ? t('profile.place') : t('profile.places')}
                     </Text>
                   </View>
 

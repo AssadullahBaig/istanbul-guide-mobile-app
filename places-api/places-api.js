@@ -5,7 +5,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const ISTANBUL_BBOX = "40.97,28.92,41.04,29.02";
+const ISTANBUL_BBOX = "40.80,28.80,41.20,29.20"; // Much wider BBOX covering all of Istanbul
 
 const REQUIRED_PLACES = [];
 
@@ -22,12 +22,15 @@ function normalizeElement(el) {
     else if (tags.amenity === "restaurant") category = "Restaurant";
     else if (tags.amenity === "cafe") category = "Cafe";
     else if (tags.leisure === "park") category = "Park";
-    else if (tags.shop) category = "Shopping";
+    else if (tags.shop || tags.amenity === "marketplace") category = "Shopping";
     else if (tags.historic === "palace" || tags.building === "palace") category = "Palace";
+    else if (tags.historic === "castle" || tags.historic === "fort") category = "Palace";
+    else if (tags.historic === "monument" || tags.historic === "memorial") category = "Monument";
     else if (tags.historic) category = "Historical";
+    else if (tags.tourism === "attraction") category = "Historical";
 
     return {
-        id: String(el.id),
+        id: String(el.type || "osm") + "_" + String(el.id),
         type: "landmark",
         title: tags.name || tags["name:en"] || "Unknown Place",
         description: tags.description || tags["description:en"] || tags.wikipedia || "A notable place in Istanbul.",
@@ -45,6 +48,14 @@ function dedupePlaces(places) {
         seen.add(place.id);
         return true;
     });
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
 
 app.get("/api/places", async (_req, res) => {
@@ -84,9 +95,17 @@ app.get("/api/places", async (_req, res) => {
   way["leisure"="park"](${ISTANBUL_BBOX});
   relation["leisure"="park"](${ISTANBUL_BBOX});
 
-  node["shop"="mall"](${ISTANBUL_BBOX});
-  way["shop"="mall"](${ISTANBUL_BBOX});
-  relation["shop"="mall"](${ISTANBUL_BBOX});
+  node["shop"](${ISTANBUL_BBOX});
+  way["shop"](${ISTANBUL_BBOX});
+  relation["shop"](${ISTANBUL_BBOX});
+  
+  node["amenity"="marketplace"](${ISTANBUL_BBOX});
+  way["amenity"="marketplace"](${ISTANBUL_BBOX});
+  relation["amenity"="marketplace"](${ISTANBUL_BBOX});
+  
+  node["tourism"="attraction"](${ISTANBUL_BBOX});
+  way["tourism"="attraction"](${ISTANBUL_BBOX});
+  relation["tourism"="attraction"](${ISTANBUL_BBOX});
 );
 out center tags;
     `.trim();
@@ -95,6 +114,7 @@ out center tags;
             method: "POST",
             headers: {
                 "Content-Type": "text/plain",
+                "User-Agent": "IstanbulGuideApp/1.0"
             },
             body: query,
         });
@@ -110,9 +130,32 @@ out center tags;
             .map(normalizeElement)
             .filter(isUsefulPlace);
 
-        const mergedPlaces = dedupePlaces([...REQUIRED_PLACES, ...livePlaces])
-            .sort((a, b) => a.title.localeCompare(b.title))
-            .slice(0, 500);
+        const allPlaces = dedupePlaces([...REQUIRED_PLACES, ...livePlaces]);
+        shuffleArray(allPlaces); // Randomize locations instead of clustering them
+
+        const byCategory = {};
+        for (const p of allPlaces) {
+            if (!byCategory[p.category]) byCategory[p.category] = [];
+            byCategory[p.category].push(p);
+        }
+
+        const targetTotal = 150;
+        const categories = Object.keys(byCategory);
+        let mergedPlaces = [];
+        
+        let added = true;
+        let index = 0;
+        while (mergedPlaces.length < targetTotal && added) {
+            added = false;
+            for (const cat of categories) {
+                if (mergedPlaces.length >= targetTotal) break;
+                if (index < byCategory[cat].length) {
+                    mergedPlaces.push(byCategory[cat][index]);
+                    added = true;
+                }
+            }
+            index++;
+        }
 
         res.json(mergedPlaces);
     } catch (error) {

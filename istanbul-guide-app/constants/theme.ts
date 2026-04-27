@@ -23,3 +23,26 @@ export const radii = {
   xl: 28,
   pill: 999,
 };
+
+/**
+ * Light / dark token map — consumed by useThemeColor and Collapsible.
+ */
+export const Colors = {
+  light: {
+    text: '#102027',
+    background: '#f6f7f8',
+    tint: '#0f3d4c',
+    icon: '#60717a',
+    tabIconDefault: '#60717a',
+    tabIconSelected: '#0f3d4c',
+  },
+  dark: {
+    text: '#ecedee',
+    background: '#151718',
+    tint: '#d9b15f',
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: '#d9b15f',
+  },
+};
+

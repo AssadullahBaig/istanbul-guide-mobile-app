@@ -1,25 +1,89 @@
 import { supabase } from "./supabase";
 
+const PLACES_API_BASE_URL = "http://192.168.1.104:4000";
+
 export async function getHistoricalPlaces() {
   try {
+    let dbPlaces: any[] = [];
     const { data, error } = await supabase
       .from("vw_places_with_categories")
       .select("*");
 
     if (error) {
       console.error("Supabase Connection Error:", error);
-      throw new Error("Failed to load places");
+    } else if (data) {
+      dbPlaces = data.map((place: any) => ({
+        ...place,
+        id: String(place.id || place.place_id),
+        category: place.category_name,
+      }));
     }
 
-    return (data || []).map((place: any) => ({
-      ...place,
-      id: place.id || place.place_id,
-      category: place.category_name,
-    }));
+    let apiPlaces: any[] = [];
+    try {
+      const response = await fetch(`${PLACES_API_BASE_URL}/api/places`);
+      if (response.ok) {
+        apiPlaces = await response.json();
+      } else {
+        console.warn("Places API returned non-ok status:", response.status);
+      }
+    } catch (apiError) {
+      console.warn("Places API is unreachable:", apiError);
+    }
+
+    const combined = [...dbPlaces, ...apiPlaces];
+    const seen = new Set();
+    const result = combined.filter((place) => {
+      if (!place.id) return false;
+      const key = String(place.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return result;
   } catch (error) {
-    console.error("Unexpected Error:", error);
+    console.error("Unexpected Error in getHistoricalPlaces:", error);
     return [];
   }
+}
+
+export async function ensurePlaceInDb(place: any): Promise<string> {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(place.id);
+  if (isUUID) return place.id;
+
+  const { data: existing } = await supabase
+    .from("places")
+    .select("id")
+    .eq("title", place.title)
+    .limit(1);
+
+  if (existing && existing.length > 0) return existing[0].id;
+
+  let categoryId = null;
+  if (place.category) {
+    const { data: catData } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("name", place.category)
+      .maybeSingle();
+    if (catData) categoryId = catData.id;
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("places")
+    .insert({
+      title: place.title,
+      description: place.description || "",
+      latitude: place.latitude,
+      longitude: place.longitude,
+      category_id: categoryId,
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error("Could not sync API place to database.");
+  return inserted.id;
 }
 
 export async function checkIsFavorite(userId: string, placeId: string) {
@@ -30,7 +94,10 @@ export async function checkIsFavorite(userId: string, placeId: string) {
     .eq("place_id", placeId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    if (error.code === '22P02') return false; // Not a DB UUID, so it can't be a favorite
+    throw error;
+  }
   return !!data;
 }
 
@@ -173,7 +240,12 @@ export async function getPlaceRatingStats(placeId: string) {
     .select("rating")
     .eq("place_id", placeId);
 
-  if (error) throw error;
+  if (error) {
+    if (error.code === '22P02') {
+      return { averageRating: 0, reviewCount: 0 };
+    }
+    throw error;
+  }
 
   const reviews = data || [];
   const reviewCount = reviews.length;

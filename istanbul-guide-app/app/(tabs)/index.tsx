@@ -15,6 +15,7 @@ import {
 import MapView, { Marker, Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import LandmarkDetailCard from "../../components/LandmarkDetailCard";
 import MyLocationButton from "../../components/MyLocationButton";
@@ -31,6 +32,7 @@ const ISTANBUL_REGION: Region = {
 };
 
 export default function MapScreen() {
+  const { t } = useTranslation();
   const mapRef = useRef<MapView | null>(null);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
@@ -38,7 +40,7 @@ export default function MapScreen() {
   const [region, setRegion] = useState<Region>(ISTANBUL_REGION);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null);
-  const [locationStatus, setLocationStatus] = useState("Getting location...");
+  const [locationStatus, setLocationStatus] = useState(t('map.locationGetting'));
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
@@ -85,7 +87,7 @@ export default function MapScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        setLocationStatus("Location permission denied. Showing Istanbul by default.");
+        setLocationStatus(t("map.locationDenied"));
         return;
       }
 
@@ -111,7 +113,7 @@ export default function MapScreen() {
 
       setLocationStatus("");
     } catch {
-      setLocationStatus("Could not fetch location. Showing Istanbul by default.");
+      setLocationStatus(t('map.locationError'));
     }
   };
 
@@ -375,8 +377,8 @@ export default function MapScreen() {
           onPress={() => setIsPanelExpanded(!isPanelExpanded)}
         >
           <View>
-            <Text style={styles.panelTitle}>Discover Istanbul</Text>
-            <Text style={styles.panelCount}>{filteredPlaces.length} places</Text>
+            <Text style={styles.panelTitle}>{t('map.discover')}</Text>
+            <Text style={styles.panelCount}>{t('map.placesCount', { count: filteredPlaces.length })}</Text>
           </View>
           <Ionicons 
             name={isPanelExpanded ? "chevron-up" : "chevron-down"} 
@@ -388,14 +390,14 @@ export default function MapScreen() {
         {isPanelExpanded && (
           <View>
             {!!locationStatus && <Text style={styles.statusText}>{locationStatus}</Text>}
-            {!!loading && <Text style={styles.statusText}>Loading places...</Text>}
+            {!!loading && <Text style={styles.statusText}>{t('map.loading')}</Text>}
             {!!error && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.searchShell}>
               <Text style={styles.searchIcon}>⌕</Text>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search landmarks or events"
+                placeholder={t('map.searchPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -475,10 +477,10 @@ export default function MapScreen() {
 
             {showNearbyPlaces && searchQuery.trim().length === 0 && (
               <View style={styles.nearbyCard}>
-                <Text style={styles.nearbyTitle}>Nearby Places</Text>
+                <Text style={styles.nearbyTitle}>{t('map.nearbyTitle')}</Text>
 
                 {nearbyPlaces.length === 0 ? (
-                  <Text style={styles.nearbyEmpty}>No nearby places found.</Text>
+                  <Text style={styles.nearbyEmpty}>{t('map.nearbyEmpty')}</Text>
                 ) : (
                   nearbyPlaces.map((place, index) => (
                     <TouchableOpacity
@@ -522,7 +524,7 @@ export default function MapScreen() {
                       </View>
 
                       <Text style={styles.nearbyDistance}>
-                        {place.distance.toFixed(1)} km
+                        {t('map.distanceAway', { distance: place.distance.toFixed(1) })}
                       </Text>
                     </TouchableOpacity>
                   ))
@@ -754,5 +756,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 12,
     right: 12,
+    maxHeight: "80%",
   },
 });

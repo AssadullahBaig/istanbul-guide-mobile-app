@@ -12,6 +12,7 @@ import {
     View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { supabase } from "../services/supabase";
 import {
@@ -22,6 +23,7 @@ import {
     getUserTrips,
     submitReview,
     toggleFavorite,
+    ensurePlaceInDb,
 } from "../services/places.services";
 import { generateLandmarkDescription } from "../services/ai.service";
 import { MapItem } from "../types/map";
@@ -44,6 +46,7 @@ export default function LandmarkDetailCard({
     distanceKm,
     onClose,
 }: Props) {
+    const { t } = useTranslation();
     const categoryColor = getCategoryColor(item.category);
 
     const [userId, setUserId] = useState<string | null>(null);
@@ -122,8 +125,8 @@ export default function LandmarkDetailCard({
     const requireAuth = () => {
         if (!userId) {
             Alert.alert(
-                "Sign in required",
-                "Please sign in first to save places, create trips, or leave reviews."
+                t('card.signInRequired'),
+                t('card.signInRequiredDesc')
             );
             return false;
         }
@@ -135,11 +138,12 @@ export default function LandmarkDetailCard({
 
         try {
             setFavoriteLoading(true);
-            const newValue = await toggleFavorite(userId, item.id);
+            const dbPlaceId = await ensurePlaceInDb(item);
+            const newValue = await toggleFavorite(userId, dbPlaceId);
             setIsFavorite(newValue);
         } catch (error) {
             console.error("Failed to toggle favorite:", error);
-            Alert.alert("Error", "Could not update your saved place.");
+            Alert.alert(t('card.error'), "Could not update your saved place.");
         } finally {
             setFavoriteLoading(false);
         }
@@ -155,7 +159,7 @@ export default function LandmarkDetailCard({
             setTrips(data || []);
         } catch (error) {
             console.error("Failed to load trips:", error);
-            Alert.alert("Error", "Could not load your trips.");
+            Alert.alert(t('card.error'), "Could not load your trips.");
         } finally {
             setTripsLoading(false);
         }
@@ -163,12 +167,13 @@ export default function LandmarkDetailCard({
 
     const handleAddToTrip = async (tripId: string) => {
         try {
-            await addPlaceToTrip(tripId, item.id);
+            const dbPlaceId = await ensurePlaceInDb(item);
+            await addPlaceToTrip(tripId, dbPlaceId);
             setTripModalVisible(false);
-            Alert.alert("Added", `${item.title} was added to your trip.`);
+            Alert.alert(t('card.added'), t('card.addedDesc', { title: item.title }));
         } catch (error: any) {
             console.error("Failed to add to trip:", error);
-            Alert.alert("Error", error?.message || "Could not add place to trip.");
+            Alert.alert(t('card.error'), error?.message || "Could not add place to trip.");
         }
     };
 
@@ -177,7 +182,7 @@ export default function LandmarkDetailCard({
 
         const name = newTripName.trim();
         if (!name) {
-            Alert.alert("Missing name", "Please enter a trip name.");
+            Alert.alert(t('card.missingName'), t('card.missingNameDesc'));
             return;
         }
 
@@ -189,7 +194,7 @@ export default function LandmarkDetailCard({
             await handleAddToTrip(createdTrip.id);
         } catch (error: any) {
             console.error("Failed to create trip:", error);
-            Alert.alert("Error", error?.message || "Could not create a new trip.");
+            Alert.alert(t('card.error'), error?.message || "Could not create a new trip.");
         } finally {
             setCreatingTrip(false);
         }
@@ -199,15 +204,16 @@ export default function LandmarkDetailCard({
         if (!requireAuth() || !userId) return;
 
         if (selectedRating < 1) {
-            Alert.alert("Missing rating", "Please select a star rating.");
+            Alert.alert(t('card.missingRating'), t('card.missingRatingDesc'));
             return;
         }
 
         try {
             setSubmittingReview(true);
-            await submitReview(userId, item.id, selectedRating, reviewComment.trim());
+            const dbPlaceId = await ensurePlaceInDb(item);
+            await submitReview(userId, dbPlaceId, selectedRating, reviewComment.trim());
 
-            const stats = await getPlaceRatingStats(item.id);
+            const stats = await getPlaceRatingStats(dbPlaceId);
             setAverageRating(stats.averageRating ?? 0);
             setReviewCount(stats.reviewCount ?? 0);
 
@@ -215,10 +221,10 @@ export default function LandmarkDetailCard({
             setSelectedRating(0);
             setReviewComment("");
 
-            Alert.alert("Thank you", "Your review has been saved.");
+            Alert.alert(t('card.thankYou'), t('card.reviewSaved'));
         } catch (error: any) {
             console.error("Failed to submit review:", error);
-            Alert.alert("Error", error?.message || "Could not save your review.");
+            Alert.alert(t('card.error'), error?.message || "Could not save your review.");
         } finally {
             setSubmittingReview(false);
         }
@@ -227,13 +233,13 @@ export default function LandmarkDetailCard({
     const handleGenerateAiDescription = async () => {
         try {
             setAiLoading(true);
-            const result = await generateLandmarkDescription(item.title, "English");
+            const result = await generateLandmarkDescription(item.title);
             setShortAiDescription(result.shortDescription || "");
             setDetailedAiDescription(result.detailedDescription || "");
         } catch (error: any) {
             console.error("Failed to generate AI description:", error);
             Alert.alert(
-                "AI Error",
+                t('card.aiError'),
                 error?.message || "Could not generate the AI description."
             );
         } finally {
@@ -283,14 +289,14 @@ export default function LandmarkDetailCard({
                 <View style={styles.metaRow}>
                     {!!distanceKm && (
                         <View style={styles.metaPill}>
-                            <Text style={styles.metaPillLabel}>Distance</Text>
+                            <Text style={styles.metaPillLabel}>{t('card.distance')}</Text>
                             <Text style={styles.metaPillValue}>{distanceKm} km</Text>
                         </View>
                     )}
 
                     {item.period ? (
                         <View style={styles.metaPill}>
-                            <Text style={styles.metaPillLabel}>Period</Text>
+                            <Text style={styles.metaPillLabel}>{t('card.period')}</Text>
                             <Text style={styles.metaPillValue} numberOfLines={1}>
                                 {item.period}
                             </Text>
@@ -298,12 +304,12 @@ export default function LandmarkDetailCard({
                     ) : null}
 
                     <View style={styles.metaPill}>
-                        <Text style={styles.metaPillLabel}>Rating</Text>
+                        <Text style={styles.metaPillLabel}>{t('card.rating')}</Text>
                         {statsLoading ? (
                             <ActivityIndicator size="small" color="#0f4c5c" />
                         ) : (
                             <Text style={styles.metaPillValue}>
-                                {reviewCount > 0 ? `${averageRating.toFixed(1)} ★` : "No reviews"}
+                                {reviewCount > 0 ? `${averageRating.toFixed(1)} ★` : t('card.noReviews')}
                             </Text>
                         )}
                     </View>
@@ -334,7 +340,7 @@ export default function LandmarkDetailCard({
                                         isFavorite && styles.actionButtonTextPrimary,
                                     ]}
                                 >
-                                    {isFavorite ? "Saved" : "Save"}
+                                    {isFavorite ? t('card.saved') : t('card.save')}
                                 </Text>
                             </>
                         )}
@@ -346,7 +352,7 @@ export default function LandmarkDetailCard({
                         activeOpacity={0.88}
                     >
                         <Ionicons name="add-circle-outline" size={18} color="#0f172a" />
-                        <Text style={styles.actionButtonText}>Trip</Text>
+                        <Text style={styles.actionButtonText}>{t('card.trip')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -355,52 +361,58 @@ export default function LandmarkDetailCard({
                         activeOpacity={0.88}
                     >
                         <Ionicons name="star-outline" size={18} color="#0f172a" />
-                        <Text style={styles.actionButtonText}>Review</Text>
+                        <Text style={styles.actionButtonText}>{t('card.review')}</Text>
                     </TouchableOpacity>
                 </View>
 
-                <Text style={styles.description}>{item.description}</Text>
+                <ScrollView 
+                    style={{ flex: 1, marginTop: 4 }} 
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <Text style={styles.description}>{item.description}</Text>
 
-                <View style={styles.aiSection}>
-                    <View style={styles.aiHeaderRow}>
-                        <View>
-                            <Text style={styles.aiTitle}>AI Description</Text>
-                            <Text style={styles.aiSubtitle}>
-                                Get a richer tourist-friendly description of this place.
-                            </Text>
+                    <View style={styles.aiSection}>
+                        <View style={styles.aiHeaderRow}>
+                            <View>
+                                <Text style={styles.aiTitle}>{t('card.aiDescription')}</Text>
+                                <Text style={styles.aiSubtitle}>
+                                    {t('card.aiSubtitle')}
+                                </Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.aiButton}
+                                onPress={handleGenerateAiDescription}
+                                activeOpacity={0.88}
+                                disabled={aiLoading}
+                            >
+                                {aiLoading ? (
+                                    <ActivityIndicator color="#ffffff" size="small" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="sparkles-outline" size={16} color="#ffffff" />
+                                        <Text style={styles.aiButtonText}>{t('card.generate')}</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity
-                            style={styles.aiButton}
-                            onPress={handleGenerateAiDescription}
-                            activeOpacity={0.88}
-                            disabled={aiLoading}
-                        >
-                            {aiLoading ? (
-                                <ActivityIndicator color="#ffffff" size="small" />
-                            ) : (
-                                <>
-                                    <Ionicons name="sparkles-outline" size={16} color="#ffffff" />
-                                    <Text style={styles.aiButtonText}>Generate</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
+                        {!!shortAiDescription && (
+                            <View style={styles.aiCard}>
+                                <Text style={styles.aiCardLabel}>{t('card.short')}</Text>
+                                <Text style={styles.aiCardText}>{shortAiDescription}</Text>
+                            </View>
+                        )}
+
+                        {!!detailedAiDescription && (
+                            <View style={styles.aiCard}>
+                                <Text style={styles.aiCardLabel}>{t('card.detailed')}</Text>
+                                <Text style={styles.aiCardText}>{detailedAiDescription}</Text>
+                            </View>
+                        )}
                     </View>
-
-                    {!!shortAiDescription && (
-                        <View style={styles.aiCard}>
-                            <Text style={styles.aiCardLabel}>Short</Text>
-                            <Text style={styles.aiCardText}>{shortAiDescription}</Text>
-                        </View>
-                    )}
-
-                    {!!detailedAiDescription && (
-                        <View style={styles.aiCard}>
-                            <Text style={styles.aiCardLabel}>Detailed</Text>
-                            <Text style={styles.aiCardText}>{detailedAiDescription}</Text>
-                        </View>
-                    )}
-                </View>
+                </ScrollView>
             </View>
 
             <Modal
@@ -412,20 +424,20 @@ export default function LandmarkDetailCard({
                 <View style={styles.modalBackdrop}>
                     <View style={styles.modalCard}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Add to Trip</Text>
+                            <Text style={styles.modalTitle}>{t('card.addToTrip')}</Text>
                             <TouchableOpacity onPress={() => setTripModalVisible(false)}>
                                 <Ionicons name="close" size={24} color="#475569" />
                             </TouchableOpacity>
                         </View>
 
                         <Text style={styles.modalSubtitle}>
-                            Choose one of your trips or create a new one.
+                            {t('card.chooseTrip')}
                         </Text>
 
                         <View style={styles.createTripBox}>
                             <TextInput
                                 style={styles.createTripInput}
-                                placeholder="New trip name"
+                                placeholder={t('card.newTripName')}
                                 placeholderTextColor="#94a3b8"
                                 value={newTripName}
                                 onChangeText={setNewTripName}
@@ -438,7 +450,7 @@ export default function LandmarkDetailCard({
                                 {creatingTrip ? (
                                     <ActivityIndicator color="#ffffff" size="small" />
                                 ) : (
-                                    <Text style={styles.createTripButtonText}>Create</Text>
+                                    <Text style={styles.createTripButtonText}>{t('card.create')}</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -454,12 +466,12 @@ export default function LandmarkDetailCard({
                                 showsVerticalScrollIndicator={false}
                             >
                                 <Text style={styles.tripCountText}>
-                                    {displayedTripCount} trip{displayedTripCount === 1 ? "" : "s"}
+                                    {t('card.tripCount', { count: displayedTripCount })}
                                 </Text>
 
                                 {trips.length === 0 ? (
                                     <Text style={styles.emptyModalText}>
-                                        You do not have any trips yet. Create one above.
+                                        {t('card.noTrips')}
                                     </Text>
                                 ) : (
                                     trips.map((trip) => (
@@ -503,14 +515,14 @@ export default function LandmarkDetailCard({
                 <View style={styles.modalBackdrop}>
                     <View style={styles.modalCard}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Leave a Review</Text>
+                            <Text style={styles.modalTitle}>{t('card.leaveReview')}</Text>
                             <TouchableOpacity onPress={() => setReviewModalVisible(false)}>
                                 <Ionicons name="close" size={24} color="#475569" />
                             </TouchableOpacity>
                         </View>
 
                         <Text style={styles.modalSubtitle}>
-                            Share your experience of {item.title}.
+                            {t('card.shareExperience', { title: item.title })}
                         </Text>
 
                         <View style={styles.starsRow}>
@@ -531,7 +543,7 @@ export default function LandmarkDetailCard({
 
                         <TextInput
                             style={styles.reviewInput}
-                            placeholder="Write your thoughts about this place..."
+                            placeholder={t('card.writeThoughts')}
                             placeholderTextColor="#94a3b8"
                             multiline
                             value={reviewComment}
@@ -547,7 +559,7 @@ export default function LandmarkDetailCard({
                             {submittingReview ? (
                                 <ActivityIndicator color="#ffffff" size="small" />
                             ) : (
-                                <Text style={styles.submitReviewButtonText}>Submit Review</Text>
+                                <Text style={styles.submitReviewButtonText}>{t('card.submitReview')}</Text>
                             )}
                         </TouchableOpacity>
                     </View>
@@ -599,6 +611,7 @@ const styles = StyleSheet.create({
         elevation: 12,
         borderWidth: 1,
         borderColor: "#eef2f7",
+        maxHeight: "100%",
     },
 
     handle: {

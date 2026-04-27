@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View, TextInput, Button, Text } from 'react-native';
 import { supabase } from '../services/supabase'; 
+import { useTranslation } from "react-i18next";
 
 export default function SignUpScreen() {
+  const { t } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,7 +12,7 @@ export default function SignUpScreen() {
 
   async function signUpWithEmail() {
     if (!email || !password || !firstName) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      Alert.alert(t('signUp.errorTitle'), t('signUp.errorMissing'));
       return;
     }
 
@@ -27,9 +29,9 @@ export default function SignUpScreen() {
     });
 
     if (error) {
-      Alert.alert('Sign Up Error', error.message);
+      Alert.alert(t('signUp.signUpError'), error.message);
     } else {
-      Alert.alert('Success!', 'Sign up completed successfully.');
+      Alert.alert(t('signUp.successTitle'), t('signUp.successMessage'));
     }
     
     setLoading(false);
@@ -37,17 +39,17 @@ export default function SignUpScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+      <Text style={styles.title}>{t('signUp.title')}</Text>
       
       <TextInput
         style={styles.input}
-        placeholder="First Name"
+        placeholder={t('signUp.firstName')}
         value={firstName}
         onChangeText={setFirstName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Email Address"
+        placeholder={t('signUp.email')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -55,14 +57,14 @@ export default function SignUpScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password (Min 6 characters)"
+        placeholder={t('signUp.password')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       
       <Button 
-        title={loading ? "Signing up..." : "Sign Up"} 
+        title={loading ? t('signUp.buttonLoading') : t('signUp.button')} 
         onPress={signUpWithEmail} 
         disabled={loading} 
       />

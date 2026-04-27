@@ -1,4 +1,4 @@
-const AI_API_BASE_URL = "http://10.194.249.101:5000";
+const AI_API_BASE_URL = "http://192.168.1.104:5000";
 
 type DescriptionResponse = {
     shortDescription: string;

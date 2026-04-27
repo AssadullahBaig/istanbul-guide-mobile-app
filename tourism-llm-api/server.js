@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Initialize Google Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Generate descriptions for Istanbul landmarks/places
 app.post("/generate-description", async (req, res) => {
@@ -23,32 +23,34 @@ app.post("/generate-description", async (req, res) => {
     }
 
     const prompt = `
-Generate two descriptions for the Istanbul landmark "${landmark}" in ${language}:
+Generate two descriptions for the Istanbul landmark "${landmark}" in ${language}.
 
-1. Short description (2-3 sentences)
-2. Detailed description (5-6 sentences)
-
-Make it informative and beautiful for tourists visiting Istanbul.
-Format your response with "SHORT:" and "DETAILED:" labels.
+You MUST return YOUR ENTIRE RESPONSE as a valid JSON object exactly following this structure. Do NOT wrap it in markdown block quotes.
+{
+  "shortDescription": "A 2-3 sentence engaging short description",
+  "detailedDescription": "A 5-6 sentence detailed history and guide for tourists"
+}
 `;
 
-    // Generate content with Gemini
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
+    let text = response.text().trim();
 
-    // Parse the response
+    // Clean up potential markdown formatting from Gemini
+    if (text.startsWith("```json")) text = text.substring(7);
+    if (text.startsWith("```")) text = text.substring(3);
+    if (text.endsWith("```")) text = text.substring(0, text.length - 3);
+    text = text.trim();
+
     let shortDescription = "";
     let detailedDescription = "";
 
-    if (text.includes("SHORT:") && text.includes("DETAILED:")) {
-      const shortMatch = text.match(/SHORT:([\s\S]*?)(?=DETAILED:|$)/);
-      const detailedMatch = text.match(/DETAILED:([\s\S]*?)$/);
-
-      shortDescription = shortMatch ? shortMatch[1].trim() : text;
-      detailedDescription = detailedMatch ? detailedMatch[1].trim() : text;
-    } else {
-      // Fallback if format isn't followed
+    try {
+      const parsedData = JSON.parse(text);
+      shortDescription = parsedData.shortDescription || text;
+      detailedDescription = parsedData.detailedDescription || text;
+    } catch (parseError) {
+      console.error("Failed to parse JSON from AI:", text);
       shortDescription = text;
       detailedDescription = text;
     }
@@ -99,13 +101,13 @@ You MUST return YOUR ENTIRE RESPONSE as a valid JSON object exactly following th
     let text = response.text().trim();
 
     // Clean up potential markdown formatting from Gemini
-    if (text.startsWith("\`\`\`json")) {
+    if (text.startsWith("```json")) {
       text = text.substring(7);
     }
-    if (text.startsWith("\`\`\`")) {
+    if (text.startsWith("```")) {
       text = text.substring(3);
     }
-    if (text.endsWith("\`\`\`")) {
+    if (text.endsWith("```")) {
       text = text.substring(0, text.length - 3);
     }
 
@@ -138,5 +140,5 @@ You MUST return YOUR ENTIRE RESPONSE as a valid JSON object exactly following th
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Istanbul Guide API running on port ${PORT}`);
-  console.log(`Using Google Gemini API with model: gemini-2.5-flash`);
+  console.log(`Using Google Gemini API with model: gemini-1.5-flash`);
 });

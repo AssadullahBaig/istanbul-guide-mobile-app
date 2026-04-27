@@ -2,11 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 import { Pressable, StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { colors, radii } from "../../constants/theme";
 import { supabase } from "../../services/supabase";
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [savedCount, setSavedCount] = useState(0);
@@ -79,32 +81,32 @@ export default function ProfileScreen() {
           <View style={styles.avatarPlaceholder}>
             <Ionicons name="person-outline" size={40} color={colors.primary} />
           </View>
-          <Text style={styles.name}>Welcome Back</Text>
+          <Text style={styles.name}>{t('profile.welcomeBack')}</Text>
           <Text style={styles.subtitle}>{userEmail}</Text>
         </View>
 
         <View style={styles.statGrid}>
           <Pressable style={styles.statCard} onPress={() => router.push("/favorites")}>
             <Text style={styles.statValue}>{savedCount}</Text>
-            <Text style={styles.statLabel}>Saved</Text>
+            <Text style={styles.statLabel}>{t('profile.saved')}</Text>
           </Pressable>
           
           <Pressable style={styles.statCard} onPress={() => router.push("/favorites")}>
           <Text style={styles.statValue}>{tripsCount}</Text>
-            <Text style={styles.statLabel}>Trips</Text>
+            <Text style={styles.statLabel}>{t('profile.trips')}</Text>
           </Pressable>
           
           <Pressable style={styles.statCard} onPress={() => router.push("/")}>
             <Text style={styles.statValue}>{reviewsCount}</Text>
-            <Text style={styles.statLabel}>Reviews</Text>
+            <Text style={styles.statLabel}>{t('profile.reviews')}</Text>
           </Pressable>
         </View>
 
         <View style={styles.infoCard}>
           <Pressable style={styles.infoRow} onPress={() => router.push("/settings")}>
             <View style={{ flex: 1, paddingRight: 10 }}>
-              <Text style={styles.infoLabel}>Account Settings</Text>
-              <Text style={styles.infoValue}>Manage profile & interests</Text>
+              <Text style={styles.infoLabel}>{t('profile.accountSettings')}</Text>
+              <Text style={styles.infoValue}>{t('profile.manageProfile')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </Pressable>
@@ -112,7 +114,7 @@ export default function ProfileScreen() {
 
         <Pressable style={styles.logoutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.white} />
-          <Text style={styles.settingsButtonText}>Sign Out</Text>
+          <Text style={styles.settingsButtonText}>{t('profile.signOut')}</Text>
         </Pressable>
       </View>
     </View>

@@ -12,10 +12,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { supabase } from '../../services/supabase';
 import { getHistoricalPlaces } from '../../services/places.services';
 
 export default function ExploreScreen() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [places, setPlaces] = useState<any[]>([]); 
   const [categories, setCategories] = useState<string[]>([]);
@@ -117,17 +119,14 @@ export default function ExploreScreen() {
           style={styles.heroCard}
         >
           <Text style={styles.eyebrow}>ISTANBUL SMART TOURISM GUIDE</Text>
-          <Text style={styles.title}>Discover the city through stories, landmarks, and living history.</Text>
-          <Text style={styles.subtitle}>
-            Search places, explore by category, and jump into the map with a calm,
-            sleek experience designed for easy travel.
-          </Text>
+          <Text style={styles.title}>{t('explore.subtitle')}</Text>
+          <Text style={styles.subtitle}>{t('explore.description')}</Text>
 
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={22} color="#8aa3af" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search landmarks, periods, or categories"
+              placeholder={t('explore.searchPlaceholder')}
               placeholderTextColor="#8aa3af"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -144,14 +143,14 @@ export default function ExploreScreen() {
           </View>
 
           <TouchableOpacity style={styles.primaryButton} onPress={openMap} activeOpacity={0.9}>
-            <Text style={styles.primaryButtonText}>Open Interactive Map</Text>
+            <Text style={styles.primaryButtonText}>{t('explore.openMap')}</Text>
           </TouchableOpacity>
         </LinearGradient>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Browse by Category</Text>
+          <Text style={styles.sectionTitle}>{t('explore.browseCategory')}</Text>
           <TouchableOpacity onPress={openMap}>
-            <Text style={styles.sectionLink}>See map</Text>
+            <Text style={styles.sectionLink}>{t('explore.seeMap')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -181,29 +180,25 @@ export default function ExploreScreen() {
             <View style={styles.quickActionIconWrap}>
               <Ionicons name="map-outline" size={24} color="#17414d" />
             </View>
-            <Text style={styles.quickActionTitle}>Map</Text>
-            <Text style={styles.quickActionText}>
-              Open the full interactive map of historical places.
-            </Text>
+            <Text style={styles.quickActionTitle}>{t('explore.quickMap')}</Text>
+            <Text style={styles.quickActionText}>{t('explore.quickMapDesc')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.quickActionCard} onPress={openNearbyOnMap} activeOpacity={0.9}>
             <View style={styles.quickActionIconWrap}>
               <Ionicons name="navigate-outline" size={24} color="#17414d" />
             </View>
-            <Text style={styles.quickActionTitle}>Nearby</Text>
-            <Text style={styles.quickActionText}>
-              Jump to places close to your current location.
-            </Text>
+            <Text style={styles.quickActionTitle}>{t('explore.quickNearby')}</Text>
+            <Text style={styles.quickActionText}>{t('explore.quickNearbyDesc')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            {searchQuery.trim() ? "Search Results" : "Featured Places"}
+            {searchQuery.trim() ? t('explore.searchResults') : t('explore.featuredPlaces')}
           </Text>
           <TouchableOpacity onPress={() => router.push("/favorites")}>
-            <Text style={styles.sectionLink}>Saved</Text>
+            <Text style={styles.sectionLink}>{t('explore.saved')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -211,7 +206,7 @@ export default function ExploreScreen() {
           <ActivityIndicator size="large" color="#155e75" style={{ marginTop: 40 }} />
         ) : filteredPlaces.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No places matched your search.</Text>
+            <Text style={styles.emptyText}>{t('explore.emptySearch')}</Text>
           </View>
         ) : (
           filteredPlaces.map((item) => (
