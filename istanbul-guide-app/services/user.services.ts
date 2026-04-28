@@ -1,10 +1,21 @@
 import { supabase } from './supabase';
 
+let cachedCategories: any[] | null = null;
+let lastCatFetchTime = 0;
+const CAT_CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
 export const userService = {
   // FETCH ALL AVAILABLE CATEGORIES
   async getCategories() {
+    if (cachedCategories && Date.now() - lastCatFetchTime < CAT_CACHE_TTL) {
+      return cachedCategories;
+    }
+
     const { data, error } = await supabase.from('categories').select('*');
     if (error) throw error;
+    
+    cachedCategories = data;
+    lastCatFetchTime = Date.now();
     return data;
   },
 

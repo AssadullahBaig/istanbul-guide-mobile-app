@@ -78,7 +78,7 @@ export default function TripDetailsScreen() {
             </Text>
             <TouchableOpacity
               style={styles.exploreButton}
-              onPress={() => router.push("/(tabs)" as any)}
+              onPress={() => router.push("/(tabs)/map" as any)}
             >
               <Text style={styles.exploreButtonText}>Explore Places on Map</Text>
             </TouchableOpacity>

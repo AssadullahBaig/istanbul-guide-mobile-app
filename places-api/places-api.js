@@ -26,6 +26,8 @@ function normalizeElement(el) {
     else if (tags.historic === "palace" || tags.building === "palace") category = "Palace";
     else if (tags.historic === "castle" || tags.historic === "fort") category = "Palace";
     else if (tags.historic === "monument" || tags.historic === "memorial") category = "Monument";
+    else if (tags.historic === "battlefield" || tags.historic === "archaeological_site" || tags.historic === "ruins") category = "Historical Event";
+    else if (tags.amenity === "events_venue" || tags.amenity === "theatre" || tags.amenity === "arts_centre" || tags.leisure === "stadium" || tags.amenity === "cinema") category = "Event";
     else if (tags.historic) category = "Historical";
     else if (tags.tourism === "attraction") category = "Historical";
 
@@ -83,21 +85,13 @@ app.get("/api/places", async (_req, res) => {
   way["amenity"="place_of_worship"]["religion"="muslim"](${ISTANBUL_BBOX});
   relation["amenity"="place_of_worship"]["religion"="muslim"](${ISTANBUL_BBOX});
 
-  node["amenity"="restaurant"](${ISTANBUL_BBOX});
-  way["amenity"="restaurant"](${ISTANBUL_BBOX});
-  relation["amenity"="restaurant"](${ISTANBUL_BBOX});
-
-  node["amenity"="cafe"](${ISTANBUL_BBOX});
-  way["amenity"="cafe"](${ISTANBUL_BBOX});
-  relation["amenity"="cafe"](${ISTANBUL_BBOX});
-
   node["leisure"="park"](${ISTANBUL_BBOX});
   way["leisure"="park"](${ISTANBUL_BBOX});
   relation["leisure"="park"](${ISTANBUL_BBOX});
 
+  node["amenity"="restaurant"](${ISTANBUL_BBOX});
+  node["amenity"="cafe"](${ISTANBUL_BBOX});
   node["shop"](${ISTANBUL_BBOX});
-  way["shop"](${ISTANBUL_BBOX});
-  relation["shop"](${ISTANBUL_BBOX});
   
   node["amenity"="marketplace"](${ISTANBUL_BBOX});
   way["amenity"="marketplace"](${ISTANBUL_BBOX});
@@ -106,6 +100,16 @@ app.get("/api/places", async (_req, res) => {
   node["tourism"="attraction"](${ISTANBUL_BBOX});
   way["tourism"="attraction"](${ISTANBUL_BBOX});
   relation["tourism"="attraction"](${ISTANBUL_BBOX});
+
+  node["historic"="battlefield"](${ISTANBUL_BBOX});
+  node["historic"="archaeological_site"](${ISTANBUL_BBOX});
+  node["historic"="ruins"](${ISTANBUL_BBOX});
+
+  node["amenity"="events_venue"](${ISTANBUL_BBOX});
+  node["amenity"="theatre"](${ISTANBUL_BBOX});
+  node["amenity"="arts_centre"](${ISTANBUL_BBOX});
+  node["leisure"="stadium"](${ISTANBUL_BBOX});
+  node["amenity"="cinema"](${ISTANBUL_BBOX});
 );
 out center tags;
     `.trim();
@@ -113,10 +117,10 @@ out center tags;
         const response = await fetch("https://overpass-api.de/api/interpreter", {
             method: "POST",
             headers: {
-                "Content-Type": "text/plain",
+                "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": "IstanbulGuideApp/1.0"
             },
-            body: query,
+            body: "data=" + encodeURIComponent(query),
         });
 
         if (!response.ok) {

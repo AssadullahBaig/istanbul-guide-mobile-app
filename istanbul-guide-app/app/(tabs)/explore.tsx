@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { supabase } from '../../services/supabase';
 import { getHistoricalPlaces } from '../../services/places.services';
+import { userService } from '../../services/user.services';
 
 export default function ExploreScreen() {
   const { t } = useTranslation();
@@ -31,14 +32,10 @@ export default function ExploreScreen() {
       const placesData = await getHistoricalPlaces();
       setPlaces(placesData);
       
-      const { data: categoryData, error } = await supabase
-        .from('categories')
-        .select('name')
-        .order('name');
-
-      if (!error && categoryData) {
-        setCategories(categoryData.map(c => c.name));
-      } else {
+      try {
+        const categoryData = await userService.getCategories();
+        setCategories(categoryData.map((c: any) => c.name).sort());
+      } catch (error) {
         console.error("Failed to fetch categories", error);
       }
       
@@ -107,6 +104,10 @@ export default function ExploreScreen() {
       pathname: "/",
       params: { nearby: "1" },
     });
+  };
+
+  const openAiItinerary = () => {
+    router.push("/ai-itinerary");
   };
 
   return (
@@ -190,6 +191,14 @@ export default function ExploreScreen() {
             </View>
             <Text style={styles.quickActionTitle}>{t('explore.quickNearby')}</Text>
             <Text style={styles.quickActionText}>{t('explore.quickNearbyDesc')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.quickActionCard} onPress={openAiItinerary} activeOpacity={0.9}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: '#eef5ff' }]}>
+              <Ionicons name="sparkles-outline" size={24} color="#3b82f6" />
+            </View>
+            <Text style={styles.quickActionTitle}>{t('aiItinerary.quickActionTitle')}</Text>
+            <Text style={styles.quickActionText}>{t('aiItinerary.quickActionDesc')}</Text>
           </TouchableOpacity>
         </View>
 

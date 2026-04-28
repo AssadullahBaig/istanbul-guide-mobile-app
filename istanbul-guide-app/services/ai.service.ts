@@ -1,8 +1,24 @@
-const AI_API_BASE_URL = "http://192.168.1.104:5000";
+import Constants from 'expo-constants';
+
+const debuggerHost = Constants.expoConfig?.hostUri;
+const ipAddress = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
+
+const AI_API_BASE_URL = `http://${ipAddress}:5000`;
 
 type DescriptionResponse = {
     shortDescription: string;
     detailedDescription: string;
+};
+
+export type ItineraryStop = {
+    name: string;
+    shortDescription: string;
+    detailedDescription: string;
+};
+
+export type ItineraryResponse = {
+    title: string;
+    stops: ItineraryStop[];
 };
 
 const fallbackDescriptions: Record<string, DescriptionResponse> = {
@@ -75,6 +91,60 @@ export async function generateLandmarkDescription(
         return {
             shortDescription: `${landmarkName} is one of Istanbul's interesting destinations and remains popular among visitors.`,
             detailedDescription: `${landmarkName} is a well-known place in Istanbul that reflects the city’s rich cultural, architectural, and historical identity. It is frequently visited by both tourists and locals and plays an important role in the city’s heritage.`,
+        };
+    }
+}
+
+export async function generateItinerary(
+    interests: string[],
+    language: string = "English"
+): Promise<ItineraryResponse> {
+    try {
+        const response = await fetch(`${AI_API_BASE_URL}/generate-itinerary`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                interests,
+                language,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to generate itinerary: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.stops || data.stops.length === 0) {
+            throw new Error("API returned an empty itinerary");
+        }
+
+        return data as ItineraryResponse;
+    } catch (error) {
+        console.error("AI Itinerary API failed:", error);
+
+        // Fallback generic itinerary
+        return {
+            title: "Istanbul Highlights Itinerary",
+            stops: [
+                {
+                    name: "Hagia Sophia",
+                    shortDescription: "A masterpiece of Byzantine architecture and a symbol of Istanbul.",
+                    detailedDescription: "Start your day at Sultanahmet Square. Hagia Sophia is a world-famous architectural marvel that has stood for nearly 1,500 years. You will explore its massive dome and stunning mosaics."
+                },
+                {
+                    name: "Topkapi Palace",
+                    shortDescription: "The opulent residence of Ottoman sultans for centuries.",
+                    detailedDescription: "Just a short walk from Hagia Sophia, this sprawling palace complex offers incredible views of the Bosphorus and houses the Imperial Treasury. Plan to spend a few hours exploring the courtyards."
+                },
+                {
+                    name: "Grand Bazaar",
+                    shortDescription: "One of the largest and oldest covered markets in the world.",
+                    detailedDescription: "End your day wandering through the labyrinthine streets of the Grand Bazaar. Here you can shop for spices, textiles, and ceramics while enjoying a traditional Turkish tea."
+                }
+            ]
         };
     }
 }

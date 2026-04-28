@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,8 +37,7 @@ export default function SignInScreen() {
     
       await authService.signIn(email, password);
       
-      
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/map");
     } catch (error: any) {
       // If it fails, show the Supabase error message
       setErrorMessage(error.message || "Invalid login credentials.");
@@ -51,7 +52,8 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.langToggle} onPress={toggleLanguage}>
         <Text style={styles.langToggleText}>
           {i18n.language === 'en' ? '🇹🇷 TR' : '🇬🇧 EN'}
@@ -121,13 +123,14 @@ export default function SignInScreen() {
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.85}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => router.replace("/(tabs)/map")}
           disabled={loading}
         >
           <Text style={styles.secondaryButtonText}>{t('signIn.buttonSkip')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 

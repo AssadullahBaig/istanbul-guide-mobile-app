@@ -11,35 +11,37 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { LinearGradient } from "expo-linear-gradient";
 
-// SUPABASE API INTEGRATION
 import { supabase } from '../../services/supabase';
+import { userService } from '../../services/user.services';
 
 function getCategoryInfo(category: string) {
     switch (category) {
         case "Mosque":
-            return { color: "#2563eb", icon: "moon" as const };
+            return { color: "#2563eb", bg: "#eff6ff", icon: "moon" as const };
         case "Palace":
-            return { color: "#7c3aed", icon: "business" as const };
+            return { color: "#7c3aed", bg: "#f5f3ff", icon: "business" as const };
         case "Museum":
-            return { color: "#059669", icon: "color-palette" as const };
+            return { color: "#059669", bg: "#ecfdf5", icon: "color-palette" as const };
         case "Historical Event":
+            return { color: "#9f1239", bg: "#fff1f2", icon: "time" as const };
         case "Event":
-            return { color: "#dc2626", icon: "calendar" as const };
+            return { color: "#dc2626", bg: "#fef2f2", icon: "calendar" as const };
         case "Monument":
-            return { color: "#d97706", icon: "trail-sign" as const };
+            return { color: "#d97706", bg: "#fffbeb", icon: "trail-sign" as const };
         case "Restaurant":
-            return { color: "#eab308", icon: "restaurant" as const };
+            return { color: "#eab308", bg: "#fefce8", icon: "restaurant" as const };
         case "Cafe":
-            return { color: "#ea580c", icon: "cafe" as const };
+            return { color: "#ea580c", bg: "#fff7ed", icon: "cafe" as const };
         case "Park":
-            return { color: "#10b981", icon: "leaf" as const };
+            return { color: "#10b981", bg: "#ecfdf5", icon: "leaf" as const };
         case "Shopping":
-            return { color: "#f43f5e", icon: "cart" as const };
+            return { color: "#f43f5e", bg: "#fff1f2", icon: "cart" as const };
         case "Historical":
-            return { color: "#8b5cf6", icon: "time" as const };
+            return { color: "#8b5cf6", bg: "#f5f3ff", icon: "time" as const };
         default:
-            return { color: "#0f766e", icon: "location" as const };
+            return { color: "#0f766e", bg: "#f0fdfa", icon: "location" as const };
     }
 }
 
@@ -51,15 +53,10 @@ export default function CategoriesScreen() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('name')
-          .order('name');
-          
-        if (error) throw error;
-        
+        const data = await userService.getCategories();
         if (data) {
-          setCategories(data.map(c => c.name));
+          const catNames = data.map((c: any) => c.name).sort();
+          setCategories(catNames);
         }
       } catch (error) {
         console.error("Failed to load categories:", error);
@@ -85,13 +82,25 @@ export default function CategoriesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>{t('categories.title')}</Text>
-        <Text style={styles.subtitle}>
-          {t('categories.subtitle')}
-        </Text>
+        <LinearGradient
+          colors={["#083344", "#155e75", "#1f6f82"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroCard}
+        >
+          <Ionicons name="grid" size={32} color="#f6e7cf" style={{ marginBottom: 12 }} />
+          <Text style={styles.title}>{t('categories.title')}</Text>
+          <Text style={styles.subtitle}>
+            {t('categories.subtitle')}
+          </Text>
+        </LinearGradient>
+
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>All Categories</Text>
+        </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#0f4c5c" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color="#155e75" style={{ marginTop: 40 }} />
         ) : (
           <View style={styles.grid}>
             {categories.map((category) => {
@@ -100,19 +109,17 @@ export default function CategoriesScreen() {
               return (
                 <TouchableOpacity
                   key={category}
-                  style={[styles.card, { backgroundColor: info.color }]}
-                  activeOpacity={0.88}
+                  style={styles.card}
+                  activeOpacity={0.85}
                   onPress={() => handleCategoryPress(category)}
                 >
-                  <View style={styles.iconWrapHighlighted}>
-                    <Ionicons name={info.icon} size={22} color="#ffffff" />
+                  <View style={[styles.iconWrap, { backgroundColor: info.bg }]}>
+                    <Ionicons name={info.icon} size={24} color={info.color} />
                   </View>
-
-                  <Text style={styles.cardTitleHighlighted}>
+                  <Text style={styles.cardTitle}>
                     {category}
                   </Text>
-
-                  <Text style={styles.cardTextHighlighted}>
+                  <Text style={styles.cardText}>
                     {t('categories.viewLocations', { category: category.toLowerCase() })}
                   </Text>
                 </TouchableOpacity>
@@ -128,58 +135,83 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f4f6f8",
+    backgroundColor: "#f3f4f6",
   },
   container: {
     flex: 1,
-    backgroundColor: "#f4f6f8",
+    backgroundColor: "#f3f4f6",
   },
   content: {
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 120,
   },
+  heroCard: {
+    borderRadius: 30,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 31,
     fontWeight: "800",
-    color: "#0f172a",
+    color: "#ffffff",
     marginBottom: 10,
+    lineHeight: 39,
   },
   subtitle: {
     fontSize: 15,
-    color: "#64748b",
+    color: "#d9e7ea",
     lineHeight: 24,
-    marginBottom: 22,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#102733",
   },
   grid: {
-    gap: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 14,
   },
   card: {
+    width: "47.5%",
+    backgroundColor: "#ffffff",
     borderRadius: 28,
-    padding: 24,
-    minHeight: 170,
-    justifyContent: "flex-end",
+    padding: 20,
+    marginBottom: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  iconWrapHighlighted: {
-    position: "absolute",
-    top: 24,
-    left: 24,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(255,255,255,0.18)",
+  iconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 16,
   },
-  cardTitleHighlighted: {
-    fontSize: 24,
+  cardTitle: {
+    fontSize: 17,
     fontWeight: "800",
-    color: "#ffffff",
-    marginBottom: 8,
+    color: "#102733",
+    marginBottom: 6,
   },
-  cardTextHighlighted: {
-    fontSize: 15,
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 22,
+  cardText: {
+    fontSize: 13,
+    color: "#66757d",
+    lineHeight: 18,
   },
 });

@@ -138,5 +138,18 @@
     "signUpError": "Sign Up Error",
     "successTitle": "Success!",
     "successMessage": "Sign up completed successfully."
+  },
+  "aiItinerary": {
+    "title": "AI Itinerary",
+    "subtitle": "Your highly personalized 3-stop day plan based on your exact interests.",
+    "buttonGenerate": "Generate AI Itinerary",
+    "buttonSettings": "Go to Settings",
+    "loading": "Generating your perfect day...",
+    "noInterestsTitle": "No Interests Found",
+    "noInterestsDesc": "Please select some interests in the settings tab to get personalized recommendations.",
+    "errorTitle": "Error",
+    "errorMessage": "Failed to generate AI itinerary. Please try again later.",
+    "quickActionTitle": "Smart AI Guide",
+    "quickActionDesc": "Get a personalized day plan based on your interests."
   }
 }

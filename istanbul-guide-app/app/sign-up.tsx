@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View, TextInput, Button, Text } from 'react-native';
+import { Alert, StyleSheet, View, TextInput, Button, Text, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { supabase } from '../services/supabase'; 
 import { useTranslation } from "react-i18next";
 
@@ -38,7 +38,8 @@ export default function SignUpScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
       <Text style={styles.title}>{t('signUp.title')}</Text>
       
       <TextInput
@@ -68,7 +69,8 @@ export default function SignUpScreen() {
         onPress={signUpWithEmail} 
         disabled={loading} 
       />
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 

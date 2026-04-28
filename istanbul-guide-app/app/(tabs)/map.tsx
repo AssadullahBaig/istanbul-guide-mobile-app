@@ -23,6 +23,7 @@ import { useHistoricalPlaces } from "../../hooks/useHistoricalPlaces";
 import { MapCategory, MapItem } from "../../types/map";
 
 import { supabase } from '../../services/supabase';
+import { userService } from '../../services/user.services';
 
 const ISTANBUL_REGION: Region = {
   latitude: 41.0082,
@@ -47,6 +48,7 @@ export default function MapScreen() {
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   
   const [allCategories, setAllCategories] = useState<string[]>(["All"]);
+  const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
 
   const params = useLocalSearchParams<{
     category?: string;
@@ -61,14 +63,22 @@ export default function MapScreen() {
 
   useEffect(() => {
     async function fetchCategories() {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('name')
-        .order('name');
+      try {
+        const data = await userService.getCategories();
         
-      if (!error && data) {
-        const catNames = data.map(c => c.name);
+        // Sort alphabetically
+        const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+        const catNames = sortedData.map(c => c.name);
         setAllCategories(["All", ...catNames]);
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const userInts = await userService.getUserInterests(user.id);
+          const prefNames = sortedData.filter(c => userInts.includes(c.id)).map(c => c.name);
+          setPreferredCategories(prefNames);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
       }
     }
     fetchCategories();
@@ -126,6 +136,7 @@ export default function MapScreen() {
       case "Museum":
         return "#059669";
       case "Historical Event":
+        return "#9f1239";
       case "Event":
         return "#dc2626";
       case "Monument":
@@ -415,52 +426,38 @@ export default function MapScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryRow}
+              contentContainerStyle={styles.legendRow}
             >
-              {allCategories.map((category) => {
-                const isActive = selectedCategory === category;
+              {allCategories.map((item) => {
+                const isActive = selectedCategory === item;
                 return (
                   <Pressable
-                    key={category}
-                    onPress={() => setSelectedCategory(category)}
+                    key={item}
+                    onPress={() => setSelectedCategory(item)}
                     style={[
-                      styles.categoryChip,
+                      styles.legendChip,
                       isActive && styles.categoryChipActive,
                     ]}
                   >
+                    {item !== "All" && (
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: getCategoryColor(item) },
+                        ]}
+                      />
+                    )}
                     <Text
                       style={[
-                        styles.categoryChipText,
+                        styles.legendText,
                         isActive && styles.categoryChipTextActive,
                       ]}
                     >
-                      {category}
+                      {item}
                     </Text>
                   </Pressable>
                 );
               })}
-            </ScrollView>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.legendRow}
-            >
-              {allCategories.filter(cat => cat !== "All").map(
-                (item) => (
-                  <View key={item} style={styles.legendChip}>
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: getCategoryColor(item) },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>
-                      {item === "Historical Event" ? "Event" : item}
-                    </Text>
-                  </View>
-                )
-              )}
             </ScrollView>
 
             <TouchableOpacity
@@ -523,9 +520,19 @@ export default function MapScreen() {
                         </View>
                       </View>
 
-                      <Text style={styles.nearbyDistance}>
-                        {t('map.distanceAway', { distance: place.distance.toFixed(1) })}
-                      </Text>
+                      <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                        {preferredCategories.includes(place.category) && (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Ionicons name="sparkles" size={12} color="#d8b15e" />
+                            <Text style={{ fontSize: 10, color: '#d8b15e', fontWeight: '800', marginLeft: 3 }}>
+                              Match
+                            </Text>
+                          </View>
+                        )}
+                        <Text style={styles.nearbyDistance}>
+                          {t('map.distanceAway', { distance: place.distance.toFixed(1) })}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))
                 )}

@@ -138,5 +138,18 @@
     "signUpError": "Kayıt Hatası",
     "successTitle": "Başarılı!",
     "successMessage": "Kayıt işlemi başarıyla tamamlandı."
+  },
+  "aiItinerary": {
+    "title": "Yapay Zeka Rehberi",
+    "subtitle": "İlgi alanlarınıza göre tamamen size özel hazırlanmış 3 duraklı günlük plan.",
+    "buttonGenerate": "Plan Oluştur",
+    "buttonSettings": "Ayarlara Git",
+    "loading": "Mükemmel gününüz planlanıyor...",
+    "noInterestsTitle": "İlgi Alanı Bulunamadı",
+    "noInterestsDesc": "Size özel öneriler alabilmek için lütfen ayarlar sekmesinden ilgi alanlarınızı seçin.",
+    "errorTitle": "Hata",
+    "errorMessage": "Plan oluşturulamadı. Lütfen daha sonra tekrar deneyin.",
+    "quickActionTitle": "Akıllı Rehber",
+    "quickActionDesc": "İlgi alanlarınıza özel günlük plan alın."
   }
 }

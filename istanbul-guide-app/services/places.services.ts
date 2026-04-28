@@ -1,8 +1,20 @@
 import { supabase } from "./supabase";
+import Constants from 'expo-constants';
 
-const PLACES_API_BASE_URL = "http://192.168.1.104:4000";
+const debuggerHost = Constants.expoConfig?.hostUri;
+const ipAddress = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
+
+const PLACES_API_BASE_URL = `http://${ipAddress}:4000`;
+
+let cachedPlaces: any[] | null = null;
+let lastFetchTime = 0;
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
 
 export async function getHistoricalPlaces() {
+  if (cachedPlaces && Date.now() - lastFetchTime < CACHE_TTL) {
+    return cachedPlaces;
+  }
+
   try {
     let dbPlaces: any[] = [];
     const { data, error } = await supabase
@@ -41,10 +53,12 @@ export async function getHistoricalPlaces() {
       return true;
     });
 
+    cachedPlaces = result;
+    lastFetchTime = Date.now();
     return result;
   } catch (error) {
     console.error("Unexpected Error in getHistoricalPlaces:", error);
-    return [];
+    return cachedPlaces || [];
   }
 }
 
