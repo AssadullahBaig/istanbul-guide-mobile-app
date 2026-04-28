@@ -3,6 +3,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { supabase } from "../services/supabase";
 
 export default function WelcomeScreen() {
   return (
@@ -32,7 +33,10 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             style={styles.secondaryButton}
             activeOpacity={0.9}
-            onPress={() => router.replace("/(tabs)/explore")}
+            onPress={async () => {
+              await supabase.auth.signOut();
+              router.replace("/(tabs)/explore");
+            }}
           >
             <Text style={styles.secondaryButtonText}>Continue as Guest</Text>
           </TouchableOpacity>

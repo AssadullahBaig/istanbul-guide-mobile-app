@@ -152,25 +152,15 @@ export async function getUserFavoritePlaces(userId: string) {
   const placeIds = (favoriteRows || []).map((row) => row.place_id);
   if (placeIds.length === 0) return [];
 
-  const { data: places, error: placesError } = await supabase
-    .from("vw_places_with_categories")
-    .select("*")
-    .in("place_id", placeIds);
-
-  if (placesError) throw placesError;
-
-  const mapped = (places || []).map((place: any) => ({
-    ...place,
-    id: place.id || place.place_id,
-    category: place.category_name,
-  }));
-
-  const orderMap = new Map(placeIds.map((id, index) => [id, index]));
-  mapped.sort((a, b) => {
-    const aIndex = orderMap.get(a.place_id ?? a.id) ?? 9999;
-    const bIndex = orderMap.get(b.place_id ?? b.id) ?? 9999;
-    return aIndex - bIndex;
-  });
+  const allPlaces = await getHistoricalPlaces();
+  
+  const mapped = [];
+  for (const id of placeIds) {
+    const p = allPlaces.find((x: any) => x.id === id || x.place_id === id);
+    if (p) {
+      mapped.push(p);
+    }
+  }
 
   return mapped;
 }
@@ -234,18 +224,17 @@ export async function getTripPlaces(tripId: string) {
   const placeIds = (tripPlaces || []).map((item) => item.place_id);
   if (placeIds.length === 0) return [];
 
-  const { data: places, error: placesError } = await supabase
-    .from("vw_places_with_categories")
-    .select("*")
-    .in("place_id", placeIds);
+  const allPlaces = await getHistoricalPlaces();
+  
+  const mapped = [];
+  for (const id of placeIds) {
+    const p = allPlaces.find((x: any) => x.id === id || x.place_id === id);
+    if (p) {
+      mapped.push(p);
+    }
+  }
 
-  if (placesError) throw placesError;
-
-  return (places || []).map((place: any) => ({
-    ...place,
-    id: place.id || place.place_id,
-    category: place.category_name,
-  }));
+  return mapped;
 }
 
 export async function getPlaceRatingStats(placeId: string) {
@@ -321,4 +310,20 @@ export async function submitReview(
 
   if (insertError) throw insertError;
   return true;
+}
+
+export async function getPlaceReviews(placeId: string) {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("place_id", placeId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (error.code === '22P02') {
+      return []; // invalid uuid format means no reviews yet
+    }
+    throw error;
+  }
+  return data || [];
 }

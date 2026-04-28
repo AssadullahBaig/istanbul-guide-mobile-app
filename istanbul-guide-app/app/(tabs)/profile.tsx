@@ -20,6 +20,8 @@ export default function ProfileScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email ?? "Unknown User");
+      } else {
+        setUserEmail(null);
       }
       setLoading(false);
     }
@@ -66,6 +68,8 @@ export default function ProfileScreen() {
     router.replace("/sign-in");
   };
 
+  const isGuest = !userEmail;
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
@@ -81,8 +85,8 @@ export default function ProfileScreen() {
           <View style={styles.avatarPlaceholder}>
             <Ionicons name="person-outline" size={40} color={colors.primary} />
           </View>
-          <Text style={styles.name}>{t('profile.welcomeBack')}</Text>
-          <Text style={styles.subtitle}>{userEmail}</Text>
+          <Text style={styles.name}>{isGuest ? t('profile.guestAccount', 'Guest Account') : t('profile.welcomeBack')}</Text>
+          <Text style={styles.subtitle}>{isGuest ? t('profile.guestSubtitle', 'Log in to save your preferences') : userEmail}</Text>
         </View>
 
         <View style={styles.statGrid}>
@@ -112,9 +116,12 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        <Pressable style={styles.logoutButton} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={18} color={colors.white} />
-          <Text style={styles.settingsButtonText}>{t('profile.signOut')}</Text>
+        <Pressable 
+          style={[styles.logoutButton, isGuest && { backgroundColor: colors.primary }]} 
+          onPress={handleSignOut}
+        >
+          <Ionicons name={isGuest ? "log-in-outline" : "log-out-outline"} size={18} color={colors.white} />
+          <Text style={styles.settingsButtonText}>{isGuest ? t('profile.signIn', 'Sign In') : t('profile.signOut')}</Text>
         </Pressable>
       </View>
     </View>

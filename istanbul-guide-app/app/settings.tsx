@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View, Modal, Pressable } from "react-native";
+import { router } from "expo-router";
 
 import { colors, radii } from "../constants/theme";
 import { supabase } from "../services/supabase";
@@ -15,16 +16,25 @@ export default function SettingsScreen() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        setUserId(user.id);
-
+        
+        // Always fetch categories so they display
         const cats = await userService.getCategories();
         setCategories(cats);
+
+        if (!user) {
+          setIsGuest(true);
+          return;
+        }
+        
+        setUserId(user.id);
+
 
         const userInts = await userService.getUserInterests(user.id);
         setSelectedIds(userInts);
@@ -38,12 +48,20 @@ export default function SettingsScreen() {
   }, []);
 
   const toggleInterest = (id: string) => {
+    if (isGuest) {
+      setShowGuestModal(true);
+      return;
+    }
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(catId => catId !== id) : [...prev, id]
     );
   };
 
   const handleSave = async () => {
+    if (isGuest) {
+      setShowGuestModal(true);
+      return;
+    }
     if (!userId) return;
     try {
       setSaving(true);
@@ -105,7 +123,16 @@ export default function SettingsScreen() {
           {categories.map((cat, index) => {
             const isSelected = selectedIds.includes(cat.id);
             return (
-              <View key={cat.id} style={[styles.row, index === categories.length - 1 && { borderBottomWidth: 0 }]}>
+              <TouchableOpacity 
+                key={cat.id} 
+                style={[
+                  styles.row, 
+                  index === categories.length - 1 && { borderBottomWidth: 0 },
+                  isGuest && { opacity: 0.5 }
+                ]}
+                activeOpacity={0.7}
+                onPress={() => toggleInterest(cat.id)}
+              >
                 <View style={styles.rowLeft}>
                   <View style={styles.iconWrap}>
                     <Ionicons name="star-outline" size={18} color={colors.primary} />
@@ -114,13 +141,15 @@ export default function SettingsScreen() {
                     <Text style={styles.rowTitle}>{cat.name}</Text>
                   </View>
                 </View>
-                <Switch
-                  value={isSelected}
-                  onValueChange={() => toggleInterest(cat.id)}
-                  trackColor={{ true: colors.primary, false: "#d7dbde" }}
-                  thumbColor={colors.white}
-                />
-              </View>
+                <View pointerEvents={isGuest ? "none" : "auto"}>
+                  <Switch
+                    value={isSelected}
+                    onValueChange={() => toggleInterest(cat.id)}
+                    trackColor={{ true: colors.primary, false: "#d7dbde" }}
+                    thumbColor={colors.white}
+                  />
+                </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -137,6 +166,47 @@ export default function SettingsScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* GUEST MODAL */}
+      <Modal
+        visible={showGuestModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowGuestModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="lock-closed" size={32} color="#d8b15e" />
+            </View>
+            <Text style={styles.modalTitle}>Login Required</Text>
+            <Text style={styles.modalText}>
+              You need to sign in to your account to save personal preferences and generate custom AI itineraries.
+            </Text>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.modalPrimaryButton} 
+                activeOpacity={0.8}
+                onPress={() => {
+                  setShowGuestModal(false);
+                  router.push("/sign-in");
+                }}
+              >
+                <Text style={styles.modalPrimaryText}>Sign In</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalSecondaryButton}
+                activeOpacity={0.8} 
+                onPress={() => setShowGuestModal(false)}
+              >
+                <Text style={styles.modalSecondaryText}>Stay in Guest Mode</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -160,4 +230,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   saveButtonText: { color: colors.white, fontWeight: "800", fontSize: 16 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 24 },
+  modalContent: { backgroundColor: "#ffffff", borderRadius: 32, padding: 24, width: "100%", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 10 },
+  modalIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#fef8e7", alignItems: "center", justifyContent: "center", marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: "900", color: "#102733", marginBottom: 12 },
+  modalText: { fontSize: 15, color: "#66757d", textAlign: "center", lineHeight: 24, marginBottom: 24 },
+  modalActions: { width: "100%", gap: 12 },
+  modalPrimaryButton: { backgroundColor: "#0f3340", borderRadius: 20, paddingVertical: 16, alignItems: "center", width: "100%" },
+  modalPrimaryText: { color: "#ffffff", fontSize: 16, fontWeight: "800" },
+  modalSecondaryButton: { backgroundColor: "#eef2f4", borderRadius: 20, paddingVertical: 16, alignItems: "center", width: "100%" },
+  modalSecondaryText: { color: "#102733", fontSize: 16, fontWeight: "700" },
 });

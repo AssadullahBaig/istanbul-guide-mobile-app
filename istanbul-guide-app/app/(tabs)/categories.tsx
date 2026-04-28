@@ -70,7 +70,7 @@ export default function CategoriesScreen() {
 
   const handleCategoryPress = (category: string) => {
     router.push({
-      pathname: "/",
+      pathname: "/map",
       params: { category },
     });
   };

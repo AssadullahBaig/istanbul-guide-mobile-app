@@ -60,8 +60,17 @@ function shuffleArray(array) {
     return array;
 }
 
+let cachedMergedPlaces = null;
+let lastCacheTime = 0;
+const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
 app.get("/api/places", async (_req, res) => {
     try {
+        if (cachedMergedPlaces && (Date.now() - lastCacheTime < CACHE_DURATION)) {
+            console.log("Serving places from server cache...");
+            return res.json(cachedMergedPlaces);
+        }
+
         const query = `
 [out:json][timeout:30];
 (
@@ -124,7 +133,10 @@ out center tags;
         });
 
         if (!response.ok) {
-            console.warn("Overpass failed, returning seeded places only.");
+            console.warn("Overpass failed, returning cached or seeded places only. Status:", response.status);
+            if (cachedMergedPlaces) {
+                return res.json(cachedMergedPlaces);
+            }
             return res.json(REQUIRED_PLACES);
         }
 
@@ -161,9 +173,15 @@ out center tags;
             index++;
         }
 
+        cachedMergedPlaces = mergedPlaces;
+        lastCacheTime = Date.now();
+
         res.json(mergedPlaces);
     } catch (error) {
-        console.error("Places API failed, returning seeded places only:", error);
+        console.error("Places API failed, returning cached or seeded places only:", error);
+        if (cachedMergedPlaces) {
+            return res.json(cachedMergedPlaces);
+        }
         res.json(REQUIRED_PLACES);
     }
 });

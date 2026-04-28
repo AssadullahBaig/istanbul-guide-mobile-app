@@ -91,7 +91,7 @@ export default function FavoritesScreen() {
 
   const openPlaceOnMap = (item: FavoritePlace) => {
     router.push({
-      pathname: "/",
+      pathname: "/map",
       params: {
         focusTitle: item.title,
         focusLat: String(item.latitude),

@@ -24,6 +24,7 @@ import {
     submitReview,
     toggleFavorite,
     ensurePlaceInDb,
+    getPlaceReviews,
 } from "../services/places.services";
 import { generateLandmarkDescription } from "../services/ai.service";
 import { MapItem } from "../types/map";
@@ -72,6 +73,10 @@ export default function LandmarkDetailCard({
     const [aiLoading, setAiLoading] = useState(false);
     const [shortAiDescription, setShortAiDescription] = useState("");
     const [detailedAiDescription, setDetailedAiDescription] = useState("");
+
+    const [allReviewsModalVisible, setAllReviewsModalVisible] = useState(false);
+    const [allReviews, setAllReviews] = useState<any[]>([]);
+    const [allReviewsLoading, setAllReviewsLoading] = useState(false);
 
     const displayedTripCount = useMemo(() => trips.length, [trips.length]);
 
@@ -250,6 +255,21 @@ export default function LandmarkDetailCard({
     const displayTripName = (trip: TripRow) =>
         trip.trip_name || trip.name || trip.title || "Untitled Trip";
 
+    const handleOpenUserReviews = async () => {
+        setAllReviewsModalVisible(true);
+        setAllReviewsLoading(true);
+        try {
+            const dbPlaceId = await ensurePlaceInDb(item);
+            const reviews = await getPlaceReviews(dbPlaceId);
+            setAllReviews(reviews);
+        } catch (error) {
+            console.error("Failed to load user reviews:", error);
+            Alert.alert(t('card.error'), "Could not load user reviews.");
+        } finally {
+            setAllReviewsLoading(false);
+        }
+    };
+
     return (
         <>
             <View style={styles.wrapper}>
@@ -362,6 +382,15 @@ export default function LandmarkDetailCard({
                     >
                         <Ionicons name="star-outline" size={18} color="#0f172a" />
                         <Text style={styles.actionButtonText}>{t('card.review')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={handleOpenUserReviews}
+                        activeOpacity={0.88}
+                    >
+                        <Ionicons name="people-outline" size={18} color="#0f172a" />
+                        <Text style={styles.actionButtonText}>User Reviews</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -562,6 +591,71 @@ export default function LandmarkDetailCard({
                                 <Text style={styles.submitReviewButtonText}>{t('card.submitReview')}</Text>
                             )}
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={allReviewsModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setAllReviewsModalVisible(false)}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.modalCard}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>User Reviews</Text>
+                            <TouchableOpacity onPress={() => setAllReviewsModalVisible(false)}>
+                                <Ionicons name="close" size={24} color="#475569" />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <Text style={styles.modalSubtitle}>
+                            See what other travelers think about {item.title}.
+                        </Text>
+
+                        {allReviewsLoading ? (
+                            <View style={styles.modalLoadingWrap}>
+                                <ActivityIndicator size="large" color="#0f4c5c" />
+                            </View>
+                        ) : allReviews.length === 0 ? (
+                            <Text style={styles.emptyModalText}>No user reviews yet. Be the first to leave one!</Text>
+                        ) : (
+                            <ScrollView
+                                style={styles.modalList}
+                                contentContainerStyle={{ paddingBottom: 20 }}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {allReviews.map((review) => (
+                                    <View key={review.id} style={styles.reviewItemCard}>
+                                        <View style={styles.reviewItemHeader}>
+                                            <View style={styles.reviewUserWrap}>
+                                                <View style={styles.reviewUserAvatar}>
+                                                    <Ionicons name="person" size={14} color="#0f4c5c" />
+                                                </View>
+                                                <Text style={styles.reviewUserName}>
+                                                    Traveler - {review.user_id?.substring(0, 4).toUpperCase()}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.reviewStarsWrap}>
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Ionicons
+                                                        key={star}
+                                                        name={review.rating >= star ? "star" : "star-outline"}
+                                                        size={12}
+                                                        color="#f59e0b"
+                                                    />
+                                                ))}
+                                            </View>
+                                        </View>
+                                        <Text style={styles.reviewItemComment}>{review.comment}</Text>
+                                        <Text style={styles.reviewItemDate}>
+                                            {new Date(review.created_at).toLocaleDateString()}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        )}
                     </View>
                 </View>
             </Modal>
@@ -989,5 +1083,61 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         fontSize: 15,
         fontWeight: "800",
+    },
+
+    reviewItemCard: {
+        backgroundColor: "#f8fafc",
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#eaf0f4",
+    },
+
+    reviewItemHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 10,
+    },
+
+    reviewUserWrap: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+
+    reviewUserAvatar: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#eaf4f7",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    reviewUserName: {
+        fontSize: 14,
+        fontWeight: "800",
+        color: "#0f172a",
+    },
+
+    reviewStarsWrap: {
+        flexDirection: "row",
+        gap: 2,
+    },
+
+    reviewItemComment: {
+        fontSize: 15,
+        lineHeight: 22,
+        color: "#334155",
+        marginBottom: 8,
+    },
+
+    reviewItemDate: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#94a3b8",
+        textAlign: "right",
     },
 });

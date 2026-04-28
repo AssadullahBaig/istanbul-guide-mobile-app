@@ -68,17 +68,17 @@ export default function ExploreScreen() {
   const openMap = () => {
     if (searchQuery.trim()) {
       router.push({
-        pathname: "/",
+        pathname: "/map",
         params: { searchTarget: searchQuery.trim() }
       });
     } else {
-      router.push("/");
+      router.push("/map");
     }
   };
 
   const openCategoryOnMap = (category: string) => {
     router.push({
-      pathname: "/",
+      pathname: "/map",
       params: { category },
     });
   };
@@ -89,7 +89,7 @@ export default function ExploreScreen() {
     longitude: number;
   }) => {
     router.push({
-      pathname: "/",
+      pathname: "/map",
       params: {
         focusTitle: item.title,
         focusLat: String(item.latitude),
@@ -101,7 +101,7 @@ export default function ExploreScreen() {
 
   const openNearbyOnMap = () => {
     router.push({
-      pathname: "/",
+      pathname: "/map",
       params: { nearby: "1" },
     });
   };
@@ -150,8 +150,9 @@ export default function ExploreScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('explore.browseCategory')}</Text>
-          <TouchableOpacity onPress={openMap}>
-            <Text style={styles.sectionLink}>{t('explore.seeMap')}</Text>
+          <TouchableOpacity style={styles.actionPill} onPress={openMap} activeOpacity={0.8}>
+            <Text style={styles.actionPillText}>{t('explore.seeMap')}</Text>
+            <Ionicons name="arrow-forward" size={14} color="#155e75" />
           </TouchableOpacity>
         </View>
 
@@ -206,8 +207,9 @@ export default function ExploreScreen() {
           <Text style={styles.sectionTitle}>
             {searchQuery.trim() ? t('explore.searchResults') : t('explore.featuredPlaces')}
           </Text>
-          <TouchableOpacity onPress={() => router.push("/favorites")}>
-            <Text style={styles.sectionLink}>{t('explore.saved')}</Text>
+          <TouchableOpacity style={styles.actionPill} onPress={() => router.push("/favorites")} activeOpacity={0.8}>
+            <Text style={styles.actionPillText}>{t('explore.saved')}</Text>
+            <Ionicons name="bookmark" size={14} color="#155e75" />
           </TouchableOpacity>
         </View>
 
@@ -328,10 +330,19 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#102733",
   },
-  sectionLink: {
-    fontSize: 15,
+  actionPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e6f0f3",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 4,
+  },
+  actionPillText: {
+    fontSize: 13,
     fontWeight: "700",
-    color: "#123c4a",
+    color: "#155e75",
   },
   categoriesRow: {
     paddingBottom: 12,
