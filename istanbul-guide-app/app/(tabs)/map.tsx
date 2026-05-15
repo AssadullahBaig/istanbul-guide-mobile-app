@@ -2,7 +2,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import * as Location from "expo-location";
 import { useLocalSearchParams } from "expo-router";
 import { getDistance } from "geolib";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import LandmarkDetailCard from "../../components/LandmarkDetailCard";
 import MyLocationButton from "../../components/MyLocationButton";
 import { useHistoricalPlaces } from "../../hooks/useHistoricalPlaces";
-import { MapCategory, MapItem } from "../../types/map";
+import { MapItem } from "../../types/map";
 
 import { supabase } from '../../services/supabase';
 import { userService } from '../../services/user.services';
@@ -46,7 +46,7 @@ export default function MapScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  
+
   const [allCategories, setAllCategories] = useState<string[]>(["All"]);
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
 
@@ -65,7 +65,7 @@ export default function MapScreen() {
     async function fetchCategories() {
       try {
         const data = await userService.getCategories();
-        
+
         // Sort alphabetically
         const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
         const catNames = sortedData.map(c => c.name);
@@ -92,7 +92,7 @@ export default function MapScreen() {
       .replace(/’/g, "'")
       .trim();
 
-  const getUserLocation = async () => {
+  const getUserLocation = useCallback(async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
@@ -125,7 +125,7 @@ export default function MapScreen() {
     } catch {
       setLocationStatus(t('map.locationError'));
     }
-  };
+  }, [t]);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -156,7 +156,7 @@ export default function MapScreen() {
     }
   };
 
-  const findPlaceByFocusParams = () => {
+  const findPlaceByFocusParams = useCallback(() => {
     if (places.length === 0) return null;
 
     const focusTitle = params.focusTitle
@@ -200,11 +200,11 @@ export default function MapScreen() {
     }
 
     return null;
-  };
+  }, [params.focusLat, params.focusLng, params.focusTitle, places]);
 
   useEffect(() => {
     getUserLocation();
-  }, []);
+  }, [getUserLocation]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
@@ -256,6 +256,8 @@ export default function MapScreen() {
     params.focusTitle,
     params.focusLat,
     params.focusLng,
+    selectedCategory,
+    findPlaceByFocusParams,
     places,
   ]);
 
@@ -382,8 +384,8 @@ export default function MapScreen() {
           { top: insets.top + 18 },
         ]}
       >
-        <TouchableOpacity 
-          style={styles.headerRow} 
+        <TouchableOpacity
+          style={styles.headerRow}
           activeOpacity={0.7}
           onPress={() => setIsPanelExpanded(!isPanelExpanded)}
         >
@@ -391,10 +393,10 @@ export default function MapScreen() {
             <Text style={styles.panelTitle}>{t('map.discover')}</Text>
             <Text style={styles.panelCount}>{t('map.placesCount', { count: filteredPlaces.length })}</Text>
           </View>
-          <Ionicons 
-            name={isPanelExpanded ? "chevron-up" : "chevron-down"} 
-            size={24} 
-            color="#0f172a" 
+          <Ionicons
+            name={isPanelExpanded ? "chevron-up" : "chevron-down"}
+            size={24}
+            color="#0f172a"
           />
         </TouchableOpacity>
 

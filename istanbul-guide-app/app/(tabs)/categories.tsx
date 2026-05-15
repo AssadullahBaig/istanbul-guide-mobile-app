@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { supabase } from '../../services/supabase';
 import { userService } from '../../services/user.services';
 
 function getCategoryInfo(category: string) {

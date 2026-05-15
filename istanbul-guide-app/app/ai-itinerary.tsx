@@ -48,7 +48,7 @@ export default function AiItineraryScreen() {
 
         const language = i18n.language === 'tr' ? 'Turkish' : 'English';
         const response = await generateItinerary(interestNames, language);
-        
+
         setItinerary(response);
       } catch (err) {
         console.error("Failed to load itinerary", err);
@@ -60,7 +60,7 @@ export default function AiItineraryScreen() {
     }
 
     loadItinerary();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
@@ -84,8 +84,8 @@ export default function AiItineraryScreen() {
           </View>
           <Text style={styles.emptyTitle}>{t('aiItinerary.noInterestsTitle')}</Text>
           <Text style={styles.emptyDesc}>{t('aiItinerary.noInterestsDesc')}</Text>
-          <TouchableOpacity 
-            style={styles.primaryButton} 
+          <TouchableOpacity
+            style={styles.primaryButton}
             onPress={() => router.push("/settings")}
             activeOpacity={0.9}
           >
@@ -117,8 +117,8 @@ export default function AiItineraryScreen() {
             <Ionicons name="warning-outline" size={48} color="#ef4444" />
             <Text style={styles.errorTitle}>{t('aiItinerary.errorTitle')}</Text>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
-              style={styles.primaryButton} 
+            <TouchableOpacity
+              style={styles.primaryButton}
               onPress={() => router.back()}
             >
               <Text style={styles.primaryButtonText}>Go Back</Text>
@@ -147,7 +147,7 @@ export default function AiItineraryScreen() {
                   <Text style={styles.stopShortDesc}>{stop.shortDescription}</Text>
                   <View style={styles.stopDivider} />
                   <Text style={styles.stopDetailedDesc}>{stop.detailedDescription}</Text>
-                  
+
                   {index < itinerary.stops.length - 1 && (
                     <View style={styles.timelineConnector} />
                   )}

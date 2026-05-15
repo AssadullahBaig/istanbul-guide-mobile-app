@@ -7,7 +7,108 @@ app.use(express.json());
 
 const ISTANBUL_BBOX = "40.80,28.80,41.20,29.20"; // Much wider BBOX covering all of Istanbul
 
-const REQUIRED_PLACES = [];
+const REQUIRED_PLACES = [
+    {
+        id: "seed_1",
+        type: "landmark",
+        title: "Hagia Sophia",
+        description: "A world-famous architectural masterpiece that has served as a church and mosque.",
+        category: "Museum",
+        latitude: 41.0082,
+        longitude: 28.9784,
+        period: "537 AD"
+    },
+    {
+        id: "seed_2",
+        type: "landmark",
+        title: "Blue Mosque",
+        description: "Historic mosque known for its six minarets and blue tiles.",
+        category: "Mosque",
+        latitude: 41.0054,
+        longitude: 28.9768,
+        period: "1616"
+    },
+    {
+        id: "seed_3",
+        type: "landmark",
+        title: "Topkapi Palace",
+        description: "The primary residence of the Ottoman sultans for nearly 400 years.",
+        category: "Palace",
+        latitude: 41.0115,
+        longitude: 28.9833,
+        period: "1465"
+    },
+    {
+        id: "seed_4",
+        type: "landmark",
+        title: "Galata Tower",
+        description: "A medieval stone tower offering panoramic views of Istanbul.",
+        category: "Monument",
+        latitude: 41.0256,
+        longitude: 28.9741,
+        period: "1348"
+    },
+    {
+        id: "seed_5",
+        type: "landmark",
+        title: "Grand Bazaar",
+        description: "One of the largest and oldest covered markets in the world.",
+        category: "Shopping",
+        latitude: 41.0106,
+        longitude: 28.9680,
+        period: "1461"
+    },
+    {
+        id: "seed_6",
+        type: "landmark",
+        title: "Basilica Cistern",
+        description: "The largest of several hundred ancient cisterns beneath the city.",
+        category: "Historical",
+        latitude: 41.0080,
+        longitude: 28.9769,
+        period: "532 AD"
+    },
+    {
+        id: "seed_7",
+        type: "landmark",
+        title: "Dolmabahçe Palace",
+        description: "An opulent 19th-century palace along the Bosphorus.",
+        category: "Palace",
+        latitude: 41.0391,
+        longitude: 28.9981,
+        period: "1856"
+    },
+    {
+        id: "seed_8",
+        type: "landmark",
+        title: "Istiklal Avenue",
+        description: "A famous pedestrian street filled with cafes, boutiques, and historic trams.",
+        category: "Shopping",
+        latitude: 41.0340,
+        longitude: 28.9798,
+        period: "19th Century"
+    },
+    {
+        id: "seed_9",
+        type: "landmark",
+        title: "Gülhane Park",
+        description: "A historical urban park adjacent to Topkapi Palace.",
+        category: "Park",
+        latitude: 41.0125,
+        longitude: 28.9800,
+        period: "1912"
+    },
+    {
+        id: "seed_10",
+        type: "landmark",
+        title: "Taksim Square",
+        description: "The heart of modern Istanbul, known for restaurants, shops, and hotels.",
+        category: "Monument",
+        latitude: 41.0370,
+        longitude: 28.9850,
+        period: "Modern"
+    }
+];
 
 function isUsefulPlace(place) {
     return place.title && place.title !== "Unknown Place" && place.latitude && place.longitude;

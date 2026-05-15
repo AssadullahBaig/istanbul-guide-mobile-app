@@ -74,7 +74,7 @@ export default function TripDetailsScreen() {
             </View>
             <Text style={styles.emptyTitle}>Your Itinerary is Empty</Text>
             <Text style={styles.emptyText}>
-              You haven't added any historical places to this trip yet. Go back to the map or saved places to start building your route.
+              You have not added any historical places to this trip yet. Go back to the map or saved places to start building your route.
             </Text>
             <TouchableOpacity
               style={styles.exploreButton}

@@ -1,9 +1,13 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const configuredApiUrl = Constants.expoConfig?.extra?.aiApiBaseUrl as string | undefined;
 const debuggerHost = Constants.expoConfig?.hostUri;
-const ipAddress = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
+const ipAddress = debuggerHost ? debuggerHost.split(':')[0] : undefined;
+const localHost = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 
-const AI_API_BASE_URL = `http://${ipAddress}:5000`;
+const AI_API_BASE_URL = configuredApiUrl || `http://${ipAddress || localHost}:5000`;
 
 type DescriptionResponse = {
     shortDescription: string;
@@ -51,6 +55,8 @@ const fallbackDescriptions: Record<string, DescriptionResponse> = {
 export async function generateLandmarkDescription(
     landmarkName: string
 ): Promise<DescriptionResponse> {
+    const CACHE_KEY = `@ai_desc_${landmarkName.replace(/\s+/g, '_')}`;
+
     try {
         const response = await fetch(`${AI_API_BASE_URL}/generate-description`, {
             method: "POST",
@@ -69,7 +75,7 @@ export async function generateLandmarkDescription(
 
         const data = await response.json();
 
-        return {
+        const result = {
             shortDescription:
                 data.shortDescription ||
                 fallbackDescriptions[landmarkName]?.shortDescription ||
@@ -79,14 +85,26 @@ export async function generateLandmarkDescription(
                 fallbackDescriptions[landmarkName]?.detailedDescription ||
                 `${landmarkName} is an important destination in Istanbul known for its historical and cultural significance.`,
         };
+
+        try {
+            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(result));
+        } catch (e) {
+            console.error("Failed to cache AI description", e);
+        }
+
+        return result;
     } catch (error) {
-        console.error("AI API failed, using fallback:", error);
+        console.warn("AI API failed, checking cache:", error);
+
+        try {
+            const stored = await AsyncStorage.getItem(CACHE_KEY);
+            if (stored) return JSON.parse(stored);
+        } catch (e) {
+            console.error("Failed to read AI description from cache", e);
+        }
 
         const fallback = fallbackDescriptions[landmarkName];
-
-        if (fallback) {
-            return fallback;
-        }
+        if (fallback) return fallback;
 
         return {
             shortDescription: `${landmarkName} is one of Istanbul's interesting destinations and remains popular among visitors.`,
@@ -99,6 +117,8 @@ export async function generateItinerary(
     interests: string[],
     language: string = "English"
 ): Promise<ItineraryResponse> {
+    const CACHE_KEY = `@ai_itinerary_${interests.join('_')}_${language}`;
+
     try {
         const response = await fetch(`${AI_API_BASE_URL}/generate-itinerary`, {
             method: "POST",
@@ -121,9 +141,22 @@ export async function generateItinerary(
             throw new Error("API returned an empty itinerary");
         }
 
+        try {
+            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.error("Failed to cache itinerary", e);
+        }
+
         return data as ItineraryResponse;
     } catch (error) {
-        console.error("AI Itinerary API failed:", error);
+        console.warn("AI Itinerary API failed, checking cache:", error);
+
+        try {
+            const stored = await AsyncStorage.getItem(CACHE_KEY);
+            if (stored) return JSON.parse(stored);
+        } catch (e) {
+            console.error("Failed to load itinerary from cache", e);
+        }
 
         // Fallback generic itinerary
         return {

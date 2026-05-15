@@ -40,7 +40,7 @@ export default function FavoritesScreen() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [favoritePlaces, setFavoritePlaces] = useState<FavoritePlace[]>([]);
-  const [trips, setTrips] = useState<Array<TripRow & { placeCount: number }>>(
+  const [trips, setTrips] = useState<(TripRow & { placeCount: number })[]>(
     []
   );
 

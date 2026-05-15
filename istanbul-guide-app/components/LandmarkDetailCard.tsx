@@ -85,9 +85,13 @@ export default function LandmarkDetailCard({
 
         async function init() {
             try {
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
+                let user = null;
+                try {
+                    const response = await supabase.auth.getUser();
+                    user = response?.data?.user;
+                } catch (e) {
+                    console.warn("Failed to get user (offline):", e);
+                }
 
                 if (!active) return;
 
@@ -100,7 +104,7 @@ export default function LandmarkDetailCard({
                             setIsFavorite(favorite);
                         }
                     } catch (error) {
-                        console.error("Failed to check favorite:", error);
+                        console.warn("Failed to check favorite:", error);
                     }
                 }
 
@@ -111,8 +115,10 @@ export default function LandmarkDetailCard({
                         setReviewCount(stats.reviewCount ?? 0);
                     }
                 } catch (error) {
-                    console.error("Failed to load rating stats:", error);
+                    console.warn("Failed to load rating stats:", error);
                 }
+            } catch (err) {
+                console.warn("Unexpected error in init:", err);
             } finally {
                 if (active) {
                     setStatsLoading(false);

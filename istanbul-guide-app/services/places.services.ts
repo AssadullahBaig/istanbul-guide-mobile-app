@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const debuggerHost = Constants.expoConfig?.hostUri;
 const ipAddress = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
@@ -15,14 +16,19 @@ export async function getHistoricalPlaces() {
     return cachedPlaces;
   }
 
+  const CACHE_KEY = '@istanbul_guide_places';
+  let dbPlaces: any[] = [];
+  let apiPlaces: any[] = [];
+  let isOffline = false;
+
   try {
-    let dbPlaces: any[] = [];
     const { data, error } = await supabase
       .from("vw_places_with_categories")
       .select("*");
 
     if (error) {
       console.error("Supabase Connection Error:", error);
+      isOffline = true;
     } else if (data) {
       dbPlaces = data.map((place: any) => ({
         ...place,
@@ -30,36 +36,57 @@ export async function getHistoricalPlaces() {
         category: place.category_name,
       }));
     }
+  } catch (e) {
+    isOffline = true;
+  }
 
-    let apiPlaces: any[] = [];
-    try {
-      const response = await fetch(`${PLACES_API_BASE_URL}/api/places`);
-      if (response.ok) {
-        apiPlaces = await response.json();
-      } else {
-        console.warn("Places API returned non-ok status:", response.status);
-      }
-    } catch (apiError) {
-      console.warn("Places API is unreachable:", apiError);
+  try {
+    const response = await fetch(`${PLACES_API_BASE_URL}/api/places`);
+    if (response.ok) {
+      apiPlaces = await response.json();
+    } else {
+      console.warn("Places API returned non-ok status:", response.status);
     }
+  } catch (apiError) {
+    console.warn("Places API is unreachable:", apiError);
+    isOffline = true;
+  }
 
-    const combined = [...dbPlaces, ...apiPlaces];
-    const seen = new Set();
-    const result = combined.filter((place) => {
-      if (!place.id) return false;
-      const key = String(place.id);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+  if (isOffline && dbPlaces.length === 0 && apiPlaces.length === 0) {
+    if (cachedPlaces) return cachedPlaces;
+    try {
+      const stored = await AsyncStorage.getItem(CACHE_KEY);
+      if (stored) {
+        cachedPlaces = JSON.parse(stored);
+        return cachedPlaces || [];
+      }
+    } catch (e) {
+      console.error("Failed to load places from cache", e);
+    }
+    return [];
+  }
 
+  const combined = [...dbPlaces, ...apiPlaces];
+  const seen = new Set();
+  const result = combined.filter((place) => {
+    if (!place.id) return false;
+    const key = String(place.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (result.length > 0) {
     cachedPlaces = result;
     lastFetchTime = Date.now();
-    return result;
-  } catch (error) {
-    console.error("Unexpected Error in getHistoricalPlaces:", error);
-    return cachedPlaces || [];
+    try {
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(result));
+    } catch (e) {
+      console.error("Failed to save places to cache", e);
+    }
   }
+
+  return result;
 }
 
 export async function ensurePlaceInDb(place: any): Promise<string> {
@@ -141,15 +168,32 @@ export async function toggleFavorite(userId: string, placeId: string) {
 }
 
 export async function getUserFavoritePlaces(userId: string) {
-  const { data: favoriteRows, error: favoriteError } = await supabase
-    .from("user_favorites")
-    .select("place_id, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  const CACHE_KEY = `@istanbul_guide_favs_${userId}`;
+  let placeIds: string[] = [];
 
-  if (favoriteError) throw favoriteError;
+  try {
+    const { data: favoriteRows, error: favoriteError } = await supabase
+      .from("user_favorites")
+      .select("place_id, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  const placeIds = (favoriteRows || []).map((row) => row.place_id);
+    if (favoriteError) throw favoriteError;
+
+    placeIds = (favoriteRows || []).map((row) => row.place_id);
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(placeIds));
+  } catch (error) {
+    console.error("Failed to fetch favorites from remote, checking cache", error);
+    try {
+      const stored = await AsyncStorage.getItem(CACHE_KEY);
+      if (stored) {
+        placeIds = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Failed to load favorites from cache", e);
+    }
+  }
+
   if (placeIds.length === 0) return [];
 
   const allPlaces = await getHistoricalPlaces();
@@ -166,14 +210,28 @@ export async function getUserFavoritePlaces(userId: string) {
 }
 
 export async function getUserTrips(userId: string) {
-  const { data, error } = await supabase
-    .from("user_trips")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  const CACHE_KEY = `@istanbul_guide_trips_${userId}`;
+  try {
+    const { data, error } = await supabase
+      .from("user_trips")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data || [];
+    if (error) throw error;
+    
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data || []));
+    return data || [];
+  } catch (error) {
+    console.error("Failed to fetch trips from remote, checking cache", error);
+    try {
+      const stored = await AsyncStorage.getItem(CACHE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to load trips from cache", e);
+    }
+    return [];
+  }
 }
 
 export async function createNewTrip(userId: string, tripName: string) {
@@ -214,14 +272,31 @@ export async function removePlaceFromTrip(tripId: string, placeId: string) {
 }
 
 export async function getTripPlaces(tripId: string) {
-  const { data: tripPlaces, error: tripPlacesError } = await supabase
-    .from("trip_places")
-    .select("place_id")
-    .eq("trip_id", tripId);
+  const CACHE_KEY = `@istanbul_guide_trip_places_${tripId}`;
+  let placeIds: string[] = [];
 
-  if (tripPlacesError) throw tripPlacesError;
+  try {
+    const { data: tripPlaces, error: tripPlacesError } = await supabase
+      .from("trip_places")
+      .select("place_id")
+      .eq("trip_id", tripId);
 
-  const placeIds = (tripPlaces || []).map((item) => item.place_id);
+    if (tripPlacesError) throw tripPlacesError;
+
+    placeIds = (tripPlaces || []).map((item) => item.place_id);
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(placeIds));
+  } catch (error) {
+    console.error("Failed to fetch trip places from remote, checking cache", error);
+    try {
+      const stored = await AsyncStorage.getItem(CACHE_KEY);
+      if (stored) {
+        placeIds = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Failed to load trip places from cache", e);
+    }
+  }
+
   if (placeIds.length === 0) return [];
 
   const allPlaces = await getHistoricalPlaces();
