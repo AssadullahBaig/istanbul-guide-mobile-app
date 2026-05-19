@@ -1,0 +1,339 @@
+# Istanbul Guide Mobile App
+
+## Weekly Development Report – Week 04
+
+### Backend Integration, Database Connection, and LLM Features
+
+| Field              | Information                |
+| ------------------ | -------------------------- |
+| Course             | Software Engineering       |
+| Student            | Asad Ullah Baig            |
+| Student ID         | 2500009626                 |
+| Lecturer           | Prof. Dr. Akhan AKBULUT    |
+| Teaching Assistant | Büşra Kocaçınar            |
+| University         | Istanbul Kültür University |
+| Date               | 14 April 2026              |
+
+---
+
+# Table of Contents
+
+1. Introduction
+2. Objectives
+3. Technologies and Tools
+4. System Design and Implementation
+
+   * 4.1 Backend Connection
+   * 4.2 Database Integration
+   * 4.3 LLM Features
+   * 4.4 API Development
+   * 4.5 Testing and Validation
+5. Database Structure
+6. Challenges and Problem Solving
+7. Achievements
+8. Future Work
+9. Conclusion
+10. Reflection and Learning Outcomes
+11. System Architecture Overview
+12. System Demonstration
+13. Screenshots
+
+---
+
+# 1. Introduction
+
+This week focused on connecting the frontend of the Istanbul Smart Tourism Guide application to backend services and real data. Until this point, most of the application content had been static and mainly used for interface development.
+
+The primary goal during this phase was to make the application behave more like a real system rather than only a visual prototype.
+
+The main work included:
+
+* Connecting the mobile application to backend APIs
+* Retrieving landmark information from a database
+* Experimenting with LLM-based features
+* Improving intelligent search and recommendation capabilities
+
+These additions significantly improved the realism and technical depth of the project.
+
+---
+
+# 2. Objectives
+
+The objectives for this week included:
+
+* Connect the frontend to backend services
+* Retrieve landmark data from a database
+* Create API endpoints for search and filtering
+* Test backend communication with the mobile application
+* Experiment with LLM-based recommendations and smart search
+* Improve error handling and loading states
+
+---
+
+# 3. Technologies and Tools
+
+The following technologies and tools were used:
+
+* React Native
+* Expo
+* TypeScript
+* Node.js
+* Express.js
+* MongoDB
+* REST APIs
+* Postman
+* LLM APIs
+
+These technologies were used to connect the frontend, backend, database, and intelligent recommendation systems together.
+
+---
+
+# 4. System Design and Implementation
+
+This phase focused on replacing static content with real backend-driven data and improving communication between system components.
+
+---
+
+## 4.1 Backend Connection
+
+The frontend mobile application was connected to backend services using API requests.
+
+This allowed the application to:
+
+* Send requests to backend APIs
+* Retrieve landmark information
+* Load nearby places dynamically
+* Fetch categories and tourism-related data
+
+---
+
+## 4.2 Database Integration
+
+The backend server was connected to a database to improve data storage and retrieval.
+
+The database layer made it easier to:
+
+* Store landmarks
+* Save user-generated content
+* Support dynamic filtering and search
+* Prepare the system for future scalability
+
+---
+
+## 4.3 LLM Features
+
+This week also included experimentation with LLM-based functionality.
+
+These features can later support:
+
+* Intelligent tourism recommendations
+* Natural language search
+* AI-generated landmark descriptions
+* Historical information generation
+
+This phase helped evaluate how AI services could improve user experience.
+
+---
+
+## 4.4 API Development
+
+Several API endpoints were created to support frontend functionality.
+
+These APIs handled:
+
+* Landmark retrieval
+* Category filtering
+* Search functionality
+* Recommendation-related requests
+
+---
+
+## 4.5 Testing and Validation
+
+Multiple tests were performed after integrating the backend and frontend systems.
+
+Testing focused on:
+
+* API communication
+* Database connectivity
+* Error handling
+* Response validation
+* Physical device testing
+
+---
+
+# 5. Database Structure
+
+The database was designed to store tourism-related information in a structured format.
+
+Each landmark record included:
+
+* Landmark name
+* Category
+* Historical description
+* Coordinates
+* Historical period
+* Tags
+
+This structure supports filtering, searching, and future recommendation features.
+
+---
+
+# 6. Challenges and Problem Solving
+
+Several technical challenges were encountered during this phase.
+
+---
+
+## Backend Connectivity Issues
+
+Connecting the frontend to the backend server was difficult initially, especially on physical mobile devices.
+
+`localhost` addresses did not work correctly, so local IP addresses had to be used instead.
+
+---
+
+## API Request Failures
+
+Some API requests returned incorrect or empty responses because of:
+
+* Route mismatches
+* Formatting inconsistencies
+* Incorrect request handling
+
+---
+
+## Database Migration Problems
+
+Moving from hardcoded frontend data to database-driven content introduced inconsistencies in the data structure.
+
+---
+
+## LLM Response Formatting
+
+LLM-generated responses were not always returned in a consistent structure.
+
+Additional formatting and validation logic was required.
+
+---
+
+## Environment and Testing Issues
+
+The backend environment occasionally behaved differently between:
+
+* Local development
+* Expo Go testing
+* Physical device testing
+
+---
+
+# 7. Achievements
+
+The following achievements were completed during this week:
+
+* Connected frontend and backend systems
+* Established database connectivity
+* Created and tested API endpoints
+* Integrated initial LLM functionality
+* Improved filtering and data retrieval
+* Made the application behave more like a complete system
+
+---
+
+# 8. Future Work
+
+Future improvements may include:
+
+* Expanding the tourism database
+* Improving AI recommendations
+* Adding authentication systems
+* Supporting multilingual content
+* Improving backend performance
+* Introducing advanced search capabilities
+
+---
+
+# 9. Conclusion
+
+This week focused on transforming the application into a more complete and realistic system.
+
+The integration of backend APIs, database connectivity, and LLM-based functionality significantly improved the technical foundation of the project.
+
+---
+
+# 10. Reflection and Learning Outcomes
+
+This phase introduced new backend-related challenges compared to previous weeks that focused mainly on frontend development.
+
+Important learning outcomes included:
+
+* Understanding API communication
+* Managing database-driven systems
+* Handling AI-generated responses
+* Structuring backend data properly
+* Testing applications on physical devices
+
+This week improved understanding of how frontend, backend, databases, and intelligent services work together in a complete application.
+
+---
+
+# 11. System Architecture Overview
+
+The application architecture now includes:
+
+* Frontend mobile application
+* Backend server
+* Database layer
+* API routes
+* LLM integration layer
+
+The system is beginning to behave more like a production-ready tourism platform rather than only a frontend prototype.
+
+---
+
+# 12. System Demonstration
+
+Users can now interact with the frontend while retrieving live information from backend services.
+
+The system currently supports:
+
+* Dynamic landmark loading
+* Real category filtering
+* Backend-driven content
+* Initial AI recommendation features
+
+---
+
+# 13. Screenshots
+
+## 1. Database Table
+
+Database table used to store user favorites and saved place information.
+
+## 2. Landing Screen
+
+Landing screen introducing the Istanbul Smart Tourism Guide application.
+
+## 3. Saved Screen
+
+Saved screen displaying favorite places and user-created trips retrieved from the database.
+
+## 4. Profile Screen
+
+Profile screen showing user statistics, saved places count, trips, and reviews.
+
+## 5. Updated Map Screen
+
+Updated map screen with dynamic categories, search functionality, and nearby places feature.
+
+## 6. Redesigned Sign-In Screen
+
+Redesigned sign-in screen with improved layout, spacing, and visual hierarchy.
+
+## 7. Initial Sign-Up Screen
+
+Initial sign-up screen before UI redesign and styling improvements.
+
+## 8. LLM-Generated Travel Guide
+
+LLM-generated travel guide content displayed dynamically for a selected landmark.
